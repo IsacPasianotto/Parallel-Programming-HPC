@@ -1,4 +1,6 @@
-CC=gcc
+SHELL=/bin/bash
+
+CC=mpicc
 
 OBJDIR=obj
 SRCDIR=src
@@ -6,15 +8,13 @@ INCLUDEDIR=include
 
 INCLUDELIBS=-fopenmp
 
-# To pass arguments like DEBUG, etc to the compiler
-INPUT_DEFS := $(filter-out $@,$(MAKECMDGOALS))
-EXTRA_FLAGS += $(foreach flag,$(ADDITIONAL_FLAGS),-D$(flag))
+# Uncomment the following line to enable it
+# EXTRAFLAGS=-DDEBUG 
 
-CFLAGS=-I$(INCLUDEDIR) -Wall -Wextra -O3 -march=native $(INCLUDELIBS) $(EXTRA_FLAGS)
-OBJFLAGS=-Wall -Wextra -O3 -march=native $(INCLUDELIBS) $(EXTRA_FLAGS)
+CFLAGS=-I$(INCLUDEDIR) -Wall -Wextra -O3 -march=native $(INCLUDELIBS) $(EXTRAFLAGS)
+OBJFLAGS=-I$(INCLUDEDIR) -Wall -Wextra -O3 -march=native $(INCLUDELIBS) $(EXTRAFLAGS)
 
-
-OBJS=$(OBJDIR)/main.o
+OBJS=$(OBJDIR)/main.o $(OBJDIR)/init.o
 
 main.x: $(OBJS)
 	$(CC) $(OBJFLAGS) -o $@ $^
