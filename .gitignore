@@ -1,3 +1,9 @@
+# Objects and executables
 *.x
 *.o
 
+# IDE folders
+.idea/
+.vscode/
+*.idea/
+*.vscode/

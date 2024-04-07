@@ -5,7 +5,7 @@
  | context: exam of "Parallel programming for  |
  |          HPC". Msc Course in DSSC           |
  | description: main file for the exercise of  |
- |              matrix matrix multiplication   |
+ |              matrix-matrix multiplication   |
  *---------------------------------------------*/
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,6 +13,7 @@
 #include <mpi.h>
 
 #include "init.h"
+#include "debug.h"
 
 
 int main(int argc, char* argv[])
@@ -47,13 +48,14 @@ int main(int argc, char* argv[])
   init_local_matrix(A, local_size * N);
   init_local_matrix(B, local_size * N);
 
-  
 #ifdef DEBUG
-  if (rank == 0)
-    printf("local_size = %ld\n", local_size);
-  printf("Rank: %d:\t A[0]: %f\t B[0]: %f\n", rank, A[0], B[0]);
-  printf("Rank: %d:\t A[%ld]: %f\t B[%ld]: %f\n", rank, local_size * N - 1, A[local_size * N - 1], local_size * N - 1, B[local_size * N - 1]);
+  debug_init_local_matrix(A, B, N, local_size, rank, size);
 #endif
+
+  /*--------------------------------------------------*
+   | 2. Main loop over the number of processes to     |
+   |    perform the local portion of the computation  |
+   *--------------------------------------------------*/
 
 
   MPI_Finalize();

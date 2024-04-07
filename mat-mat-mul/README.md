@@ -5,7 +5,7 @@
 
 ***Remark***: This exercise will be part of the exam.
 
-We are going to parallelize a code that implements the matrxi-matrix multiplication distributely 
+We are going to parallelize a code that implements the matrix-matrix multiplication distributely 
 
 $$
 A \times B = C
@@ -88,7 +88,7 @@ Allocation of distributed data
 t1
 Initialization of A and B (randomly)
 t2
-for (count = 0; c < Npes< coutn ++){
+for (count = 0; c < Npes< coutn ++){ // loop over the number of processing elements
     t3
     create_block (B, block)             // create a block of columns
     t4
