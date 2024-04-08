@@ -9,8 +9,10 @@ void build_column_block(double* local_block, double* B, long int N, long int loc
 {
   // index used to extract the block from the matrix B
   long int index = iter * ((N % size) > 0 ? N / size + 1 : N / size);
+  #pragma omp parallel for
   for (int i = 0; i < local_size; i++)
   {
+    #pragma omp parallel for
     for (int j = 0; j < all_sizes[iter]; j++)
     {
       local_block[i * all_sizes[iter] + j] = B[index];

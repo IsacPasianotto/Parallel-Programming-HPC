@@ -37,7 +37,7 @@ void debug_init_local_matrix(double* A, double* B, long int N, long int local_si
 void debug_col_block(double* B, double* local_block, long int N, long int local_size, int rank, int iter, int* all_sizes)
 {
   MPI_Barrier(MPI_COMM_WORLD);
-  if (rank ==0)
+  if (rank == 0)
   {
     printf("---------debug column block---------\n");
     printf("LOCAL MATRIX B:\n");
@@ -62,5 +62,54 @@ void debug_col_block(double* B, double* local_block, long int N, long int local_
   fflush(stdout);
   MPI_Barrier(MPI_COMM_WORLD);
   printf("---------debug column block---------\n");
+  MPI_Barrier(MPI_COMM_WORLD);
+}
+
+void debug_allgatherv(double* B, double* local_block, double* buffer, long int N, long int local_size, int rank, int iter, int* all_sizes, int buffer_size)
+{
+  MPI_Barrier(MPI_COMM_WORLD);
+  if (rank == 0)
+  {
+    printf("---------debug allgatherv---------\n");
+  }
+  MPI_Barrier(MPI_COMM_WORLD);
+  printf("I'm rank %d\titer %d\n", rank, iter);
+  printf("My part of B is:\n");
+  for (int i = 0; i < local_size; i++)
+  {
+    for (int j = 0; j < N; j++)
+    {
+      printf("%f ", B[i * N + j]);
+    }
+    printf("\n");
+  }
+  MPI_Barrier(MPI_COMM_WORLD);
+  printf("..................\n");
+  printf("I'm rank %d\titer %d\n", rank, iter);
+  printf("My local block is:\n");
+  for (int i = 0; i < local_size; i++)
+  {
+    for (int j = 0; j < all_sizes[iter]; j++)
+    {
+      printf("%f ", local_block[i * all_sizes[iter] + j]);
+    }
+    printf("\n");
+  }
+  printf("..................\n");
+  MPI_Barrier(MPI_COMM_WORLD);
+  if (rank == 0)
+  {
+    printf("Received buffer from all processes:\n");
+    for (int i = 0; i < N; i++)
+    {
+      for (int j = 0; j < buffer_size; j++)
+      {
+        printf("%f ", buffer[i * buffer_size + j]);
+      }
+      printf("\n");
+    }
+    printf("---------debug allgatherv---------\n");
+  }
+  fflush(stdout);
   MPI_Barrier(MPI_COMM_WORLD);
 }

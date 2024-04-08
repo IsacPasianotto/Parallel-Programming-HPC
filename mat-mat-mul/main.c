@@ -32,7 +32,7 @@ int main(int argc, char* argv[])
    | 1. Compute the local quantities for each worker  |
    |    and initialize the local matrices             |
    *--------------------------------------------------*/
-  
+
   long int N = 2000;
 
 #if defined(DEBUG) | defined(SMALL)
@@ -46,7 +46,7 @@ int main(int argc, char* argv[])
   }
 
   long int local_size = (rank < N % size) ? N / size + 1 : N / size;
-  
+
   // Allocate memory for the local matrices
   double* A = (double*) malloc(local_size * N * sizeof(double));
   double* B = (double*) malloc(local_size * N * sizeof(double));
@@ -59,11 +59,7 @@ int main(int argc, char* argv[])
   debug_init_local_matrix(A, B, N, local_size, rank, size);
 #endif
 
-  // I will need a buffer to receive the blocks from the other processes
-  long int buffer_size = ( (N % size) > 0 ) ? N/size + 1 : N/size;        // max possible size
-  double* buffer = (double*) malloc(buffer_size * N * sizeof(double));
-
-  /*--------------------------------------------------*
+   /*--------------------------------------------------*
    | 2. Main loop over the number of processes to     |
    |    perform the local portion of the computation  |
    *--------------------------------------------------*/
@@ -75,12 +71,20 @@ int main(int argc, char* argv[])
     all_sizes[i] = (i < N % size) ? N / size + 1 : N / size;
   }
 
-
   for (int iter = 0; iter < size; iter++)
   {
     /*--------------------------------------------------*
      | 2.1. Compute the block of the column             |
      *--------------------------------------------------*/
+    long int buffer_size =  (iter < N % size) ? N / size + 1 : N / size;
+    double* buffer = (double*) malloc(buffer_size * N * sizeof(double));
+
+    // DEBUG
+    if (rank == 0)
+    {
+      printf("Buffer size: %ld\n", buffer_size * N);
+    }
+
 
     double* local_block = (double*) malloc(local_size * all_sizes[iter] * sizeof(double));
     build_column_block(local_block, B, N, local_size, size, iter, all_sizes);
@@ -89,12 +93,30 @@ int main(int argc, char* argv[])
     debug_col_block(B, local_block, N, local_size, rank, iter, all_sizes);
 #endif
 
+    /*--------------------------------------------------*
+     | 2.2. Do an ALLGATHER operation to collect data   |
+     *--------------------------------------------------*/
 
+    int* sendcounts = (int*) malloc(size * sizeof(int));
+    int* displs = (int*) malloc(size * sizeof(int));     //displacements
 
+    // #pragma omp parallel for
+    for (int i = 0; i < size; i++)
+    {
+      sendcounts[i] = all_sizes[iter] * all_sizes[i];
+      displs[i] = (i == 0) ? 0 : displs[i-1] + sendcounts[i-1];
+    }
+
+    MPI_Allgatherv(local_block, local_size * all_sizes[iter], MPI_DOUBLE, buffer, sendcounts, displs, MPI_DOUBLE, MPI_COMM_WORLD);
+
+#if defined(DEBUG) | defined(DEBUG_COL_GATHER)
+    debug_allgatherv(B, local_block, buffer, N, local_size, rank, iter, all_sizes, buffer_size);
+#endif
+
+    free(local_block);
+    free(buffer);
 
   } // loop over the number of processes
-
-
 
   /*--------------------------------------------------*
   | 3. Clean up everything                            |
@@ -103,7 +125,6 @@ int main(int argc, char* argv[])
   free(A);
   free(B);
   free(C);
-  free(buffer);
 
   MPI_Finalize();
 }

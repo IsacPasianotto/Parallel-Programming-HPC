@@ -13,6 +13,8 @@ INCLUDELIBS=-fopenmp
 EXTRAFLAGS+=-DSMALL
 # EXTRAFLAGS+=-DDEBUG_INIT
 EXTRAFLAGS+=-DDEBUG_COL_BLOCK
+EXTRAFLAGS+=-DDEBUG_COL_GATHER
+
 # EXTRAFLAGS+=-O3  # kept separate because causes issues with printing order in debug mode
 
 CFLAGS=-I$(INCLUDEDIR) -Wall -Wextra -march=native $(INCLUDELIBS) $(EXTRAFLAGS)
