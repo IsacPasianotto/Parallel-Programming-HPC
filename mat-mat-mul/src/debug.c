@@ -33,3 +33,34 @@ void debug_init_local_matrix(double* A, double* B, long int N, long int local_si
   MPI_Barrier(MPI_COMM_WORLD);
   fflush(stdout);
 }
+
+void debug_col_block(double* B, double* local_block, long int N, long int local_size, int rank, int iter, int* all_sizes)
+{
+  MPI_Barrier(MPI_COMM_WORLD);
+  if (rank ==0)
+  {
+    printf("---------debug column block---------\n");
+    printf("LOCAL MATRIX B:\n");
+    for (int i = 0; i < local_size; i++)
+    {
+      for (int j = 0; j < N; j++)
+      {
+        printf("%f ", B[i * N + j]);
+      }
+      printf("\n");
+    }
+    printf("LOCAL BLOCK:\n");
+    for (int i = 0; i < local_size; i++)
+    {
+      for (int j = 0; j < all_sizes[iter]; j++)
+      {
+        printf("%f ", local_block[i * all_sizes[iter] + j]);
+      }
+      printf("\n");
+    }
+  }
+  fflush(stdout);
+  MPI_Barrier(MPI_COMM_WORLD);
+  printf("---------debug column block---------\n");
+  MPI_Barrier(MPI_COMM_WORLD);
+}

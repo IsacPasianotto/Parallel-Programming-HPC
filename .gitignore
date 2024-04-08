@@ -7,3 +7,7 @@
 .vscode/
 *.idea/
 *.vscode/
+
+
+mat-mat-mul/other/
+mat-mat-mul/other/*

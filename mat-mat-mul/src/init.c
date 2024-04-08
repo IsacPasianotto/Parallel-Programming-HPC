@@ -9,7 +9,8 @@
 void init_local_matrix (double* M, long int n_elements)
 {
   #pragma omp parallel for
-  for (long int i = 0; i < n_elements; i++) {
+  for (long int i = 0; i < n_elements; i++)
+  {
     M[i] = (double) rand()/1000000;
   }
 }
