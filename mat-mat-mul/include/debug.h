@@ -12,3 +12,8 @@
 #define DEBUG_ALLGATHERV
   void debug_allgatherv(double* B, double* local_block, double* buffer, long int N, long int local_size, int rank, int iter, int* all_sizes, int buffer_size);
 #endif
+
+#ifndef DEBUG_PRODUCT
+#define DEBUG_PRODUCT
+  void debug_product(double* A, double* B, double* C, long int N, long int local_size, int rank, int size);
+#endif

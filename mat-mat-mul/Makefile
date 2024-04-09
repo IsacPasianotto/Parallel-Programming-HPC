@@ -12,8 +12,10 @@ INCLUDELIBS=-fopenmp
 # EXTRAFLAGS+=-DDEBUG
 EXTRAFLAGS+=-DSMALL
 # EXTRAFLAGS+=-DDEBUG_INIT
-EXTRAFLAGS+=-DDEBUG_COL_BLOCK
-EXTRAFLAGS+=-DDEBUG_COL_GATHER
+# EXTRAFLAGS+=-DDEBUG_COL_BLOCK
+# EXTRAFLAGS+=-DDEBUG_COL_GATHER
+EXTRAFLAGS+=-DDEBUG_PROD
+
 
 # EXTRAFLAGS+=-O3  # kept separate because causes issues with printing order in debug mode
 
@@ -23,7 +25,8 @@ OBJFLAGS=-I$(INCLUDEDIR) -Wall -Wextra -march=native $(INCLUDELIBS) $(EXTRAFLAGS
 OBJS=$(OBJDIR)/main.o \
 	 $(OBJDIR)/init.o \
 	 $(OBJDIR)/debug.o \
-	 $(OBJDIR)/column_gathering.o
+	 $(OBJDIR)/column_gathering.o \
+	 $(OBJDIR)/product.o
 
 main.x: $(OBJS)
 	$(CC) $(OBJFLAGS) -o $@ $^

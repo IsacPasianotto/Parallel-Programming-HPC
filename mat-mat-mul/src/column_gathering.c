@@ -22,3 +22,32 @@ void build_column_block(double* local_block, double* B, long int N, long int loc
   }
 
 }
+
+
+void compute_receive_counts(int* revcounts, int* all_sizes, int size, int iter)
+{
+  #pragma omp parallel for
+  for (int i = 0; i < size; i++)
+  {
+    revcounts[i] = all_sizes[iter] * all_sizes[i];
+  }
+}
+
+void compute_displacements(int* displs, int* revcounts, int size)
+{
+  #pragma omp parallel for
+  for (int i = 0; i < size; i++)
+  {
+    //displs[i] = (i == 0) ? 0 : displs[i-1] + revcounts[i-1];
+    // recursion is hard to parallelize
+    displs[i] = 0;
+    if (i > 0)
+    {
+      #pragma omp parallel for
+      for (int j = 0; j < i; j++)
+      {
+        displs[i] += revcounts[j];
+      }
+    }
+  }
+}

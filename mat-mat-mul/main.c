@@ -9,12 +9,14 @@
  *---------------------------------------------*/
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <omp.h>
 #include <mpi.h>
 
 #include "init.h"
 #include "debug.h"
 #include "column_gathering.h"
+#include "product.h"
 
 
 int main(int argc, char* argv[])
@@ -54,6 +56,7 @@ int main(int argc, char* argv[])
 
   init_local_matrix(A, local_size * N);
   init_local_matrix(B, local_size * N);
+  memset(C, 0.0, local_size * N * sizeof(double));
 
 #if defined(DEBUG) | defined(DEBUG_INIT)
   debug_init_local_matrix(A, B, N, local_size, rank, size);
@@ -78,12 +81,7 @@ int main(int argc, char* argv[])
      *--------------------------------------------------*/
     long int buffer_size =  (iter < N % size) ? N / size + 1 : N / size;
     double* buffer = (double*) malloc(buffer_size * N * sizeof(double));
-
-    // DEBUG
-    if (rank == 0)
-    {
-      printf("Buffer size: %ld\n", buffer_size * N);
-    }
+    memset(buffer, 0.0, buffer_size * N * sizeof(double));
 
 
     double* local_block = (double*) malloc(local_size * all_sizes[iter] * sizeof(double));
@@ -100,12 +98,8 @@ int main(int argc, char* argv[])
     int* sendcounts = (int*) malloc(size * sizeof(int));
     int* displs = (int*) malloc(size * sizeof(int));     //displacements
 
-    // #pragma omp parallel for
-    for (int i = 0; i < size; i++)
-    {
-      sendcounts[i] = all_sizes[iter] * all_sizes[i];
-      displs[i] = (i == 0) ? 0 : displs[i-1] + sendcounts[i-1];
-    }
+    compute_receive_counts(sendcounts, all_sizes, size, iter);
+    compute_displacements(displs, sendcounts, size);
 
     MPI_Allgatherv(local_block, local_size * all_sizes[iter], MPI_DOUBLE, buffer, sendcounts, displs, MPI_DOUBLE, MPI_COMM_WORLD);
 
@@ -113,10 +107,40 @@ int main(int argc, char* argv[])
     debug_allgatherv(B, local_block, buffer, N, local_size, rank, iter, all_sizes, buffer_size);
 #endif
 
+    /*--------------------------------------------------*
+     | 2.3. Perform the computation of C_block          |
+     *--------------------------------------------------*/
+
+    // The computation is:
+    // C_block = A * B_buffer
+    //
+    // where A        -->   local_size x N
+    //       B_buffer -->   N x buffer_size
+    //       C_block  -->   local_size x buffer_size
+    //
+    // The memory address of C that has to be touched is the same of the one used to build B_block from B
+    //
+    // let's try to do it in place, no allocate another block and then copy it back to C
+
+    double* local_C_block = (double*) malloc(local_size * all_sizes[iter] * sizeof(double));
+    memset(local_C_block, 0.0, local_size * all_sizes[iter] * sizeof(double));
+
+    compute_block_result_naive(local_C_block, A, buffer, N, local_size, all_sizes, iter);
+    copy_block_to_global_C(C, local_C_block, N, local_size, all_sizes, size, iter);
+
+    free(sendcounts);
+    free(displs);
+
+    free(local_C_block);
+
     free(local_block);
     free(buffer);
 
   } // loop over the number of processes
+
+#if defined(DEBUG) | defined(DEBUG_PROD)
+  debug_product(A, B, C, N, local_size, rank, size);
+#endif
 
   /*--------------------------------------------------*
   | 3. Clean up everything                            |
@@ -125,6 +149,7 @@ int main(int argc, char* argv[])
   free(A);
   free(B);
   free(C);
-
   MPI_Finalize();
+
+  return 0;
 }
