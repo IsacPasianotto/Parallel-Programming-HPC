@@ -107,21 +107,6 @@ int main(int argc, char* argv[])
     debug_allgatherv(B, local_block, buffer, N, local_size, rank, iter, all_sizes, buffer_size);
 #endif
 
-    /*--------------------------------------------------*
-     | 2.3. Perform the computation of C_block          |
-     *--------------------------------------------------*/
-
-    // The computation is:
-    // C_block = A * B_buffer
-    //
-    // where A        -->   local_size x N
-    //       B_buffer -->   N x buffer_size
-    //       C_block  -->   local_size x buffer_size
-    //
-    // The memory address of C that has to be touched is the same of the one used to build B_block from B
-    //
-    // let's try to do it in place, no allocate another block and then copy it back to C
-
     double* local_C_block = (double*) malloc(local_size * all_sizes[iter] * sizeof(double));
     memset(local_C_block, 0.0, local_size * all_sizes[iter] * sizeof(double));
 

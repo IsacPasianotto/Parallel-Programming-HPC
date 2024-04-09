@@ -13,10 +13,13 @@ void init_local_matrix (double* M, long int n_elements)
   {
     // M[i] = (double) rand()/1000000;
     M[i] = (double) i;
+#ifdef SMALL_INTS
+    M[i] = (double) i;
+#endif
     // 50% of chance to be negative -> help to avoid overflow
-    if (rand() % 2 == 0)
-    {
-      M[i] *= -1;
-    }
+//    if (rand() % 2 == 0)
+//    {
+//      M[i] *= -1;
+//    }
   }
 }
