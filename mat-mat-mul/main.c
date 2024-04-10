@@ -17,7 +17,7 @@
 #include "debug.h"
 #include "column_gathering.h"
 #include "product.h"
-
+#include "stopwatch.h"
 
 int main(int argc, char* argv[])
 {
@@ -25,11 +25,17 @@ int main(int argc, char* argv[])
    | 0. Initialization of MPI environment         |
    *---------------------------------------------*/
 
+  // set number of threads equal to the number of cores in the current processor
+
   MPI_Init(&argc, &argv);
   int rank, size;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
+#ifdef _OPENMP
+  omp_set_num_threads(omp_get_num_procs());
+  printf("Number of threads: %d\n", omp_get_num_procs());
+#endif
   /*--------------------------------------------------*
    | 1. Compute the local quantities for each worker  |
    |    and initialize the local matrices             |
@@ -47,6 +53,13 @@ int main(int argc, char* argv[])
     N = atoi(argv[1]);
   }
 
+  int tc = 0;
+  int* time_counter = &tc;
+  double* time_records = (double*) malloc( (2 + 5*size) * sizeof(double));
+  memset(time_records, 0.0, (2 + 5*size) * sizeof(double));
+
+  record_time(time_records, time_counter);    //t0
+
   long int local_size = (rank < N % size) ? N / size + 1 : N / size;
 
   // Allocate memory for the local matrices
@@ -58,14 +71,11 @@ int main(int argc, char* argv[])
   init_local_matrix(B, local_size * N);
   memset(C, 0.0, local_size * N * sizeof(double));
 
+  record_time(time_records, time_counter);  //t1
+
 #if defined(DEBUG) | defined(DEBUG_INIT)
   debug_init_local_matrix(A, B, N, local_size, rank, size);
 #endif
-
-   /*--------------------------------------------------*
-   | 2. Main loop over the number of processes to     |
-   |    perform the local portion of the computation  |
-   *--------------------------------------------------*/
 
   int* all_sizes = (int*) malloc(size * sizeof(int));
 
@@ -74,18 +84,27 @@ int main(int argc, char* argv[])
     all_sizes[i] = (i < N % size) ? N / size + 1 : N / size;
   }
 
+  /*--------------------------------------------------*
+  | 2. Main loop over the number of processes to     |
+  |    perform the local portion of the computation  |
+  *--------------------------------------------------*/
+
   for (int iter = 0; iter < size; iter++)
   {
     /*--------------------------------------------------*
      | 2.1. Compute the block of the column             |
      *--------------------------------------------------*/
+
+    record_time(time_records, time_counter);  //t_{2+ 5 * iter}
+
     long int buffer_size =  (iter < N % size) ? N / size + 1 : N / size;
     double* buffer = (double*) malloc(buffer_size * N * sizeof(double));
     memset(buffer, 0.0, buffer_size * N * sizeof(double));
 
-
     double* local_block = (double*) malloc(local_size * all_sizes[iter] * sizeof(double));
     build_column_block(local_block, B, N, local_size, size, iter, all_sizes);
+
+    record_time(time_records, time_counter);  //t_{3+ 5 * iter}
 
 #if defined(DEBUG) | defined(DEBUG_COL_BLOCK)
     debug_col_block(B, local_block, N, local_size, rank, iter, all_sizes);
@@ -101,7 +120,11 @@ int main(int argc, char* argv[])
     compute_receive_counts(sendcounts, all_sizes, size, iter);
     compute_displacements(displs, sendcounts, size);
 
+    record_time(time_records, time_counter);  //t_{4+ 5 * iter}
+
     MPI_Allgatherv(local_block, local_size * all_sizes[iter], MPI_DOUBLE, buffer, sendcounts, displs, MPI_DOUBLE, MPI_COMM_WORLD);
+
+    record_time(time_records, time_counter);  //t_{5+ 5 * iter}
 
 #if defined(DEBUG) | defined(DEBUG_COL_GATHER)
     debug_allgatherv(B, local_block, buffer, N, local_size, rank, iter, all_sizes, buffer_size);
@@ -119,12 +142,11 @@ int main(int argc, char* argv[])
     compute_block_result_naive(local_C_block, A, buffer, N, local_size, all_sizes, iter);
     copy_block_to_global_C(C, local_C_block, N, local_size, all_sizes, size, iter);
 
+    record_time(time_records, time_counter);  //t_{6+ 5 * iter}
+
     free(sendcounts);
     free(displs);
-
     free(local_C_block);
-
-    //free(local_block);
     free(buffer);
 
   } // loop over the number of processes
@@ -133,6 +155,10 @@ int main(int argc, char* argv[])
   debug_product(A, B, C, N, local_size, rank, size);
 #endif
 
+  const char* program_type = "CPU-naive";
+  print_time_records(time_records, rank, size, program_type);
+
+
   /*--------------------------------------------------*
   | 3. Clean up everything                            |
   *--------------------------------------------------*/
@@ -140,6 +166,9 @@ int main(int argc, char* argv[])
   free(A);
   free(B);
   free(C);
+  free(all_sizes);
+  free(time_records);
+
   MPI_Finalize();
 
   return 0;

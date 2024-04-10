@@ -191,3 +191,10 @@ Note: in the dgem interface there is a LDC parameters which stands for the leadi
 
 while the CUBLAS library considered the matrix as a column major matrix, so the leading dimension is the number of rows of the matrix. 
 
+
+- - -
+
+
+`CUDA-AWARE MPI` is a feature of the MPI library that allows to pass directly the GPU memory to the MPI functions. This is useful because we can avoid the copy of the data from the GPU to the CPU and then to the other GPU.
+
+

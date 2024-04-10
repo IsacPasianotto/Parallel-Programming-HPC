@@ -11,14 +11,12 @@ void compute_block_result_naive(double* local_C_block, double* A, double* buffer
   // buffer: N x all_sizes[iter]
   // local_C_block: local_size x all_sizes[iter]
 
-  #pragma omp parallel for
+  #pragma omp parallel for collapse(2)
   for (int i = 0; i < local_size; i++)
   {
-    #pragma omp simd
     for (int j = 0; j < all_sizes[iter]; j++)
     {
       double sum = 0.0;
-      #pragma omp simd
       for (int k = 0; k < N; k++)
       {
         sum += A[i * N + k] * buffer[k * all_sizes[iter] + j];
@@ -31,10 +29,9 @@ void compute_block_result_naive(double* local_C_block, double* A, double* buffer
 void copy_block_to_global_C(double* C, double* local_C_block, long int N, long int local_size, int* all_sizes, int size, int iter)
 {
   long int index = iter * ((N % size) > 0 ? N / size + 1 : N / size);
-  #pragma omp parallel for
+  #pragma omp parallel for collapse(2)
   for (int i = 0; i < local_size; i++)
   {
-    #pragma omp simd
     for (int j = 0; j < all_sizes[iter]; j++)
     {
       C[index + i * N + j] = local_C_block[i * all_sizes[iter] + j];
