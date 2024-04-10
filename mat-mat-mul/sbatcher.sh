@@ -1,16 +1,17 @@
 #!/bin/bash
 #SBATCH --no-requeue
-#SBATCH --job-name="mmm"
+#SBATCH --job-name="mmm-pt1"
 #SBATCH --get-user-env
-#SBATCH --partition=EPYC
-#SBATCH --nodes=2
-#SBATCH --ntasks=2                   # Every MPI proc is a task --> = n nodes
+#SBATCH --partition=dcgp_usr_prod
+#SBATCH --nodes=1
+#SBATCH --ntasks=1                   # Every MPI proc is a task --> = n nodes
 #SBATCH --ntasks-per-node=1          # Number of tasks (or processes) per node
-#SBATCH --cpus-per-task=32           # Number of CPU cores per task
-#SBATCH --mem=30G
+#SBATCH --cpus-per-task=56           # Number of CPU cores per task
+#SBATCH --mem=256G
 #SBATCH --time=02:00:00
+
 nproc=2      #number of MPI-processes
-matsize=30000
+matsize=2000
 
 # Standard preamble
 echo "---------------------------------------------"
@@ -46,6 +47,7 @@ echo "time(s),rank-worker,number-of-nodes,algorithm,thing-measured" > data.csv
 
 mpirun -np $nproc ./main.x $matsize >> data.csv
 
-echo "............"
+echo "........................."
 echo "   DONE!"
-echo "............"
+echo "  ended at $(date)"
+echo "..........................."
