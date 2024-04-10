@@ -107,7 +107,13 @@ int main(int argc, char* argv[])
     debug_allgatherv(B, local_block, buffer, N, local_size, rank, iter, all_sizes, buffer_size);
 #endif
 
-    double* local_C_block = (double*) malloc(local_size * all_sizes[iter] * sizeof(double));
+    /*--------------------------------------------------*
+     | 2.3. Compute the local portion of the product    |
+     *--------------------------------------------------*/
+
+    // double* local_C_block = (double*) malloc(local_size * all_sizes[iter] * sizeof(double));
+    // local_block is not needed anymore, so we can reuse it and save memory
+    double* local_C_block = local_block;
     memset(local_C_block, 0.0, local_size * all_sizes[iter] * sizeof(double));
 
     compute_block_result_naive(local_C_block, A, buffer, N, local_size, all_sizes, iter);
@@ -118,7 +124,7 @@ int main(int argc, char* argv[])
 
     free(local_C_block);
 
-    free(local_block);
+    //free(local_block);
     free(buffer);
 
   } // loop over the number of processes
