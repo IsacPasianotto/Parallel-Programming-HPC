@@ -13,6 +13,10 @@
 #include <omp.h>
 #include <mpi.h>
 
+#ifdef OPENBLAS
+#include <cblas.h>
+#endif
+
 #include "init.h"
 #include "debug.h"
 #include "column_gathering.h"
@@ -135,7 +139,12 @@ int main(int argc, char* argv[])
     double* local_C_block = local_block;
     memset(local_C_block, 0.0, local_size * all_sizes[iter] * sizeof(double));
 
+#ifdef OPENBLAS
+    cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, local_size, all_sizes[iter], N, 1.0, A, N, buffer, all_sizes[iter], 1.0, local_C_block, all_sizes[iter]);
+#else
     compute_block_result_naive(local_C_block, A, buffer, N, local_size, all_sizes, iter);
+#endif
+
     copy_block_to_global_C(C, local_C_block, N, local_size, all_sizes, size, iter);
 
     record_time(time_records, time_counter);  //t_{6+ 5 * iter}
@@ -151,9 +160,15 @@ int main(int argc, char* argv[])
   debug_product(A, B, C, N, local_size, rank, size);
 #endif
 
+#ifdef OPENBLAS
+  const char* program_type = "CPU-OpenBLAS";
+#else
   const char* program_type = "CPU-naive";
-  print_time_records(time_records, rank, size, program_type);
+#endif
 
+#ifndef NOSTOPWATCH
+  print_time_records(time_records, rank, size, program_type);
+#endif
 
   /*--------------------------------------------------*
   | 3. Clean up everything                            |

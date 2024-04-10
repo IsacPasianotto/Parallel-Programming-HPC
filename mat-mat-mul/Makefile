@@ -10,13 +10,15 @@ INCLUDELIBS=-fopenmp
 
 # Uncomment the following line to enable it
 # EXTRAFLAGS+=-DDEBUG
-# EXTRAFLAGS+=-DSMALL
-# EXTRAFLAGS+=-DSMALL_INTS
+EXTRAFLAGS+=-DSMALL
+EXTRAFLAGS+=-DSMALL_INTS
 # EXTRAFLAGS+=-DDEBUG_INIT
 # EXTRAFLAGS+=-DDEBUG_COL_BLOCK
 # EXTRAFLAGS+=-DDEBUG_COL_GATHER
 # EXTRAFLAGS+=-DDEBUG_PROD
+# EXTRAFLAGS+=-DNOSTOPWATCH
 
+EXTRAFLAGS+=-DOPENBLAS -I/usr/include/openblas -L/usr/lib -lopenblas
 
 EXTRAFLAGS+=-O3  # kept separate because causes issues with printing order in debug mode
 

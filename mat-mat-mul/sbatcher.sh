@@ -36,6 +36,7 @@ make
 #       according to your needs
 
 
+#OMP_ variables are effective also for openBLAS
 export OMP_PLACES=cores
 export OMP_PROC_BIND=close
 
