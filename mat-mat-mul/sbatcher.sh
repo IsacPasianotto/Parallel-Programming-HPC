@@ -4,7 +4,8 @@
 #SBATCH --get-user-env
 #SBATCH --partition=EPYC
 #SBATCH --nodes=2
-#SBATCH --ntasks-per-node=1         # Number of tasks (or processes) per node
+#SBATCH --ntasks=2                   # Every MPI proc is a task --> = n nodes
+#SBATCH --ntasks-per-node=1          # Number of tasks (or processes) per node
 #SBATCH --cpus-per-task=32           # Number of CPU cores per task
 #SBATCH --mem=30G
 #SBATCH --time=02:00:00
@@ -36,7 +37,6 @@ make
 
 export OMP_PLACES=cores
 export OMP_PROC_BIND=close
-# export OMP_NUM_THREADS=12 # or set it to your desired value
 
 # if OMP_NUM_THREADS is not set, the number of threads is equal to the number of cores
 # export OMP_NUM_THREADS=128
