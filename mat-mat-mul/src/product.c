@@ -10,13 +10,13 @@ void compute_block_result_naive(double* local_C_block, double* A, double* buffer
   // A: local_size x N
   // buffer: N x all_sizes[iter]
   // local_C_block: local_size x all_sizes[iter]
-
-  #pragma omp parallel for collapse(2)
+  #pragma omp parallel for collapse(2) 
   for (int i = 0; i < local_size; i++)
   {
     for (int j = 0; j < all_sizes[iter]; j++)
     {
       double sum = 0.0;
+      #pragma omp parallel for
       for (int k = 0; k < N; k++)
       {
         sum += A[i * N + k] * buffer[k * all_sizes[iter] + j];

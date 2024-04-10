@@ -31,11 +31,9 @@ int main(int argc, char* argv[])
   int rank, size;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
+  
+  omp_set_nested(1);
 
-#ifdef _OPENMP
-  omp_set_num_threads(omp_get_num_procs());
-  printf("Number of threads: %d\n", omp_get_num_procs());
-#endif
   /*--------------------------------------------------*
    | 1. Compute the local quantities for each worker  |
    |    and initialize the local matrices             |

@@ -2,14 +2,14 @@
 #SBATCH --no-requeue
 #SBATCH --job-name="mmm"
 #SBATCH --get-user-env
-#SBATCH --partition=THIN
+#SBATCH --partition=EPYC
 #SBATCH --nodes=2
 #SBATCH --ntasks-per-node=1         # Number of tasks (or processes) per node
-#SBATCH --cpus-per-task=24           # Number of CPU cores per task
+#SBATCH --cpus-per-task=32           # Number of CPU cores per task
+#SBATCH --mem=30G
 #SBATCH --time=02:00:00
-
 nproc=2      #number of MPI-processes
-matsize=10000
+matsize=30000
 
 # Standard preamble
 echo "---------------------------------------------"
@@ -23,7 +23,7 @@ echo "---------------------------------------------"
 # TODO: change the module load commands
 #       according to the architecture you are using
 module purge
-module load openMPI/4.1.5/gnu/12.2.1
+module load openMPI/4.1.5/gnu/
 
 
 # Remove old files if any exist and then compile
@@ -33,12 +33,19 @@ make
 # TODO: set environment variables
 #       according to your needs
 
+
 export OMP_PLACES=cores
 export OMP_PROC_BIND=close
+# export OMP_NUM_THREADS=12 # or set it to your desired value
+
 # if OMP_NUM_THREADS is not set, the number of threads is equal to the number of cores
-# export OMP_NUM_THREADS=8
+# export OMP_NUM_THREADS=128
 
 # Comment after first time:
 echo "time(s),rank-worker,number-of-nodes,algorithm,thing-measured" > data.csv
 
-mpirun -np $nproc ./main.x $matsize > data.csv
+mpirun -np $nproc ./main.x $matsize >> data.csv
+
+echo "............"
+echo "   DONE!"
+echo "............"
