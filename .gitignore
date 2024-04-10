@@ -11,3 +11,6 @@
 
 mat-mat-mul/other/
 mat-mat-mul/other/*
+
+# SLURM outs
+*.out
