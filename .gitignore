@@ -9,6 +9,7 @@
 *.vscode/
 
 
+mat-mat-mul/hp*
 mat-mat-mul/other/
 mat-mat-mul/other/*
 
