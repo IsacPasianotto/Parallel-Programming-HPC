@@ -1,6 +1,7 @@
 SHELL=/bin/bash
 
 CC=mpicc
+NVCC=nvcc
 
 mainfile=main.c
 
@@ -34,16 +35,37 @@ OBJS=$(OBJDIR)/main.o \
      $(OBJDIR)/product.o \
      $(OBJDIR)/stopwatch.o
 
+OBJS_CUDA=$(OBJDIR)/cuda_main.o \
+           $(OBJDIR)/cuda_init.o \
+           $(OBJDIR)/cuda_debug.o \
+           $(OBJDIR)/cuda_column_gathering.o \
+           $(OBJDIR)/cuda_product.o \
+           $(OBJDIR)/cuda_stopwatch.o
+
 main.x: $(OBJS)
 	$(CC) $(OBJFLAGS) -o $@ $^
+
 $(OBJDIR)/main.o: $(mainfile)
 	$(CC) $(CFLAGS) -c -o $@ $^
+
 $(OBJDIR)/%.o: $(SRCDIR)/%.c
 	$(CC) $(CFLAGS) -c -o $@ $^
 
 blas: CFLAGS += $(BLASFLAGS)
 blas: $(OBJS)
 	$(CC) $(OBJFLAGS) -o main.x $^ $(BLASFLAGS)
+
+cuda: $(OBJS_CUDA)
+	$(NVCC) -I$(INCLUDEDIR) -DCUDA -o main.x $^
+
+$(OBJDIR)/cuda_main.o: $(mainfile)
+	$(NVCC) -I$(INCLUDEDIR) -DCUDA -c -o $@ $^
+
+$(OBJDIR)/cuda_%.o: $(SRCDIR)/%.c
+	$(NVCC) -I$(INCLUDEDIR) -DCUDA -c -o $@ $^
+
+# needed
+.PHONY: clean
 
 clean:
 	rm -f $(OBJDIR)/*.o main.x

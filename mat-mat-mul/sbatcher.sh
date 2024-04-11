@@ -2,15 +2,18 @@
 #SBATCH --no-requeue
 #SBATCH --job-name="mmm-pt1"
 #SBATCH --get-user-env
-#SBATCH --partition=dcgp_usr_prod
-#SBATCH --nodes=32
-#SBATCH --ntasks=32                   # Every MPI proc is a task --> = n nodes
-#SBATCH --ntasks-per-node=1          # Number of tasks (or processes) per node
-#SBATCH --cpus-per-task=56           # Number of CPU cores per task
-#SBATCH --mem=15G
-#SBATCH --time=02:00:00
+#SBATCH --account ict24_dssc_gpu
+#  #SBATCH --partition=dcgp_usr_prod     # used to CPU computation
+#SBATCH --partition=boost_usr_prod     # used to GPU computation
+#SBATCH --nodes=1
+#SBATCH --ntasks=4                   # Every MPI proc is a task --> = n nodes
+#SBATCH --ntasks-per-node=4          # Number of tasks (or processes) per node
+#SBATCH --cpus-per-task=5           # Number of CPU cores per task
+#SBATCH --gres=gpu:4
+#SBATCH --mem=10G
+#SBATCH --time=09:05:00
 
-nproc=32      #number of MPI-processes
+nproc=4      #number of MPI-processes
 matsize=5000
 
 # Standard preamble
@@ -24,14 +27,17 @@ echo "---------------------------------------------"
 
 # TODO: change the module load commands
 #       according to the architecture you are using
-module purge
+
 #  module load openMPI/4.1.5/gnu/
-module load openmpi/4.1.6--gcc--12.2.0
-module load openblas/0.3.24--gcc--12.2.0
+# module load openmpi/4.1.6--gcc--12.2.0
+# module load openblas/0.3.24--gcc--12.2.0
+module load openmpi/4.1.6--nvhpc--23.11
+module load openblas/0.3.24--nvhpc--23.11
+
 
 # Remove old files if any exist and then compile
 make clean
-make
+make cuda
 
 # TODO: set environment variables
 #       according to your needs

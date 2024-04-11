@@ -73,6 +73,25 @@ int main(int argc, char* argv[])
 
   record_time(time_records, time_counter);  //t1
 
+#ifdef CUDA
+  // need to know how many GPUs are available
+  int n_gpus;
+  cudaGetDeviceCount(&n_gpus);
+  // set the GPU to use
+  cudaSetDevice(rank % n_gpus);
+  // allocate memory on the GPU device
+  double* d_A;
+  double* d_B;
+  double* d_C;
+  cudaMalloc(&d_A, local_size * N * sizeof(double));
+  // cudaMalloc(&d_B, local_size * N * sizeof(double));
+  cudaMalloc(&d_C, local_size * N * sizeof(double));
+  // copy the data from the host to the device
+  cudaMemcpy(d_A, A, local_size * N * sizeof(double), cudaMemcpyHostToDevice);
+  // cudaMemcpy(d_B, B, local_size * N * sizeof(double), cudaMemcpyHostToDevice);
+  cudaMemcpy(d_C, C, local_size * N * sizeof(double), cudaMemcpyHostToDevice);
+#endif
+
 #if defined(DEBUG) | defined(DEBUG_INIT)
   debug_init_local_matrix(A, B, N, local_size, rank, size);
 #endif
@@ -138,12 +157,30 @@ int main(int argc, char* argv[])
     // local_block is not needed anymore, so we can reuse it and save memory
     double* local_C_block = local_block;
     memset(local_C_block, 0.0, local_size * all_sizes[iter] * sizeof(double));
-
+#ifdef CUDA
+    // pass the buffer to the GPU
+    double* d_buffer;
+    cudaMalloc(&d_buffer, buffer_size * N * sizeof(double));
+    cudaMemcpy(d_buffer, buffer, buffer_size * N * sizeof(double), cudaMemcpyHostToDevice);
+    double* d_local_C_block;
+    cudaMalloc(&d_local_C_block, local_size * all_sizes[iter] * sizeof(double));
+    // use the GPU to compute the product with the cuda blas library
+    cublasHandle_t handle;
+    cublasCreate(&handle);
+    cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, local_size, all_sizes[iter], N, 1.0, d_A, N, d_buffer, all_sizes[iter], 1.0, d_local_C_block, all_sizes[iter]);
+    // copy the result back to the host
+cudaMemcpy(local_C_block, d_local_C_block, local_size * all_sizes[iter] * sizeof(double), cudaMemcpyDeviceToHost);
+    // free the memory on the GPU
+    cudaFree(d_buffer);
+    cudaFree(d_local_C_block);
+    cublasDestroy(handle);
+#else
 #ifdef OPENBLAS
     cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, local_size, all_sizes[iter], N, 1.0, A, N, buffer, all_sizes[iter], 1.0, local_C_block, all_sizes[iter]);
 #else
     compute_block_result_naive(local_C_block, A, buffer, N, local_size, all_sizes, iter);
-#endif
+#endif // OPENBLAS
+#endif // CUDA
 
     copy_block_to_global_C(C, local_C_block, N, local_size, all_sizes, size, iter);
 

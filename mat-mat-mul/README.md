@@ -39,6 +39,12 @@ The product of the matrices is computed in 3 different ways:
 - **CUDA**: the product is computed using the `cublasDgemm` function of the `CUBLAS` library.
 
 
+**Observation**: There are some assumptions to make this algorithm work:
+
+- Each process has enough memory to store the local portion of the matrices.
+- This mean that at least every process should be able to store at list $\ \simeq 3N$ elements
+- The number of processing elements is much smaller than the size of the matrix $N$.
+- The number of processing is enough to store the entire matrices $A$, $B$ and $C$.
 
 ## How to compile and run the code 
 
@@ -55,6 +61,17 @@ mpirun -np <number_of_processes> ./main <matrix_size>
 ```
 The provided [`sbatcher.sh`](./sbatcher.sh) script can be used as example to write a SLURM script to run the code on your available cluster. It was used to run the code on the [Leonardo cluster](https://leonardo-supercomputer.cineca.eu/).
 
+
+***Remark***: For how the code is implemented, the more convenient way to allocate resource is: 
+
+- In the case of *naive* and *BLAS* implementation: 
+  - 1 process per node
+  - asking as many cores as the number of GPUs in the node (they are going to be used to spread omp threads)
+- In case of *CUDA* implementation:
+  - `<n_gpu_per_node>` processes per node
+  - giving <total_core % n_gpu_per_node> cores to each process
+  - asking the entire amount of GPUs in the node
+  - In this way every process will have a GPU to work with.
 
 
 [//]: # ()
