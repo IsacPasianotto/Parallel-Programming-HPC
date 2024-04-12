@@ -70,10 +70,10 @@ cuda: $(OBJS_CUDA)
 	$(NVCC) -I$(INCLUDEDIR) -DCUDA -o main.x $^ $(CUDAFLAGS) 
 
 $(OBJDIR)/cuda_main.o: $(mainfile)
-	$(NVCC) -I$(INCLUDEDIR) -DCUDA -c -o $@ $^
+	$(NVCC) -I$(INCLUDEDIR) -DCUDA -c -o $@ $^ $(CUDAFLAGS)
 
 $(OBJDIR)/cuda_%.o: $(SRCDIR)/%.c
-	$(NVCC) -I$(INCLUDEDIR) -DCUDA -c -o $@ $^
+	$(NVCC) -I$(INCLUDEDIR) -DCUDA -c -o $@ $^ $(CUDAFLAGS)
 
 # needed?
 .PHONY: clean

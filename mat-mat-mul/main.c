@@ -17,6 +17,11 @@
 #include <cblas.h>
 #endif
 
+#ifdef CUDA
+#include <cuda_runtime.h>
+#include <cublas_v2.h>
+#endif
+
 #include "init.h"
 #include "debug.h"
 #include "column_gathering.h"
@@ -29,19 +34,25 @@ int main(int argc, char* argv[])
    | 0. Initialization of MPI environment         |
    *---------------------------------------------*/
 
-  // set number of threads equal to the number of cores in the current processor
-
   MPI_Init(&argc, &argv);
   int rank, size;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+#ifdef CUDA
+  // each process will use its own GPU
+  int n_gpus;
+  cudaGetDeviceCount(&n_gpus);
+  cudaSetDevice(rank % n_gpus);
+#endif
+
 
   /*--------------------------------------------------*
    | 1. Compute the local quantities for each worker  |
    |    and initialize the local matrices             |
    *--------------------------------------------------*/
 
-  long int N = 2000;
+  long int N = 2000; // default value to override with the command line argument
 
 #if defined(DEBUG) | defined(SMALL)
   N = 10;
@@ -74,21 +85,14 @@ int main(int argc, char* argv[])
   record_time(time_records, time_counter);  //t1
 
 #ifdef CUDA
-  // need to know how many GPUs are available
-  int n_gpus;
-  cudaGetDeviceCount(&n_gpus);
-  // set the GPU to use
-  cudaSetDevice(rank % n_gpus);
-  // allocate memory on the GPU device
+  // need pointers to the device memory
   double* d_A;
   double* d_B;
   double* d_C;
-  cudaMalloc(&d_A, local_size * N * sizeof(double));
-  // cudaMalloc(&d_B, local_size * N * sizeof(double));
-  cudaMalloc(&d_C, local_size * N * sizeof(double));
-  // copy the data from the host to the device
+  cudaMalloc((void**)&d_A, local_size * N * sizeof(double));
+  cudaMalloc((void**)&d_C, local_size * N * sizeof(double));
+  // Cast the pointers to double*
   cudaMemcpy(d_A, A, local_size * N * sizeof(double), cudaMemcpyHostToDevice);
-  // cudaMemcpy(d_B, B, local_size * N * sizeof(double), cudaMemcpyHostToDevice);
   cudaMemcpy(d_C, C, local_size * N * sizeof(double), cudaMemcpyHostToDevice);
 #endif
 
@@ -157,30 +161,31 @@ int main(int argc, char* argv[])
     // local_block is not needed anymore, so we can reuse it and save memory
     double* local_C_block = local_block;
     memset(local_C_block, 0.0, local_size * all_sizes[iter] * sizeof(double));
+
 #ifdef CUDA
-    // pass the buffer to the GPU
-    double* d_buffer;
-    cudaMalloc(&d_buffer, buffer_size * N * sizeof(double));
-    cudaMemcpy(d_buffer, buffer, buffer_size * N * sizeof(double), cudaMemcpyHostToDevice);
-    double* d_local_C_block;
-    cudaMalloc(&d_local_C_block, local_size * all_sizes[iter] * sizeof(double));
-    // use the GPU to compute the product with the cuda blas library
+    // pass the pointers to the device memory
+    double* device_C_block;
+    double* device_B_buffer;
+    cudaMalloc((void**)&device_C_block, local_size * all_sizes[iter] * sizeof(double));
+    cudaMalloc((void**)&device_B_buffer, buffer_size * N * sizeof(double));
+    cudaMemcpy(device_B_buffer, buffer, buffer_size * N * sizeof(double), cudaMemcpyHostToDevice);
+    cudaMemcpy(device_C_block, local_C_block, local_size * all_sizes[iter] * sizeof(double), cudaMemcpyHostToDevice);
+
+    // perform the product
     cublasHandle_t handle;
     cublasCreate(&handle);
-    cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, local_size, all_sizes[iter], N, 1.0, d_A, N, d_buffer, all_sizes[iter], 1.0, d_local_C_block, all_sizes[iter]);
+    double alpha = 1.0;
+    double beta = 1.0;
+    cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, local_size, all_sizes[iter], N, &alpha, d_A, N, device_B_buffer, all_sizes[iter], &beta, device_C_block, all_sizes[iter]);
     // copy the result back to the host
-cudaMemcpy(local_C_block, d_local_C_block, local_size * all_sizes[iter] * sizeof(double), cudaMemcpyDeviceToHost);
-    // free the memory on the GPU
-    cudaFree(d_buffer);
-    cudaFree(d_local_C_block);
-    cublasDestroy(handle);
-#else
+    cudaMemcpy(local_C_block, device_C_block, local_size * all_sizes[iter] * sizeof(double), cudaMemcpyDeviceToHost);
+#endif
+
 #ifdef OPENBLAS
     cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, local_size, all_sizes[iter], N, 1.0, A, N, buffer, all_sizes[iter], 1.0, local_C_block, all_sizes[iter]);
 #else
     compute_block_result_naive(local_C_block, A, buffer, N, local_size, all_sizes, iter);
 #endif // OPENBLAS
-#endif // CUDA
 
     copy_block_to_global_C(C, local_C_block, N, local_size, all_sizes, size, iter);
 
@@ -190,6 +195,11 @@ cudaMemcpy(local_C_block, d_local_C_block, local_size * all_sizes[iter] * sizeof
     free(displs);
     free(local_C_block);
     free(buffer);
+#ifdef CUDA
+    cublasDestroy(handle);
+    cudaFree(device_C_block);
+    cudaFree(device_B_buffer);
+#endif
 
   } // loop over the number of processes
 
@@ -216,6 +226,11 @@ cudaMemcpy(local_C_block, d_local_C_block, local_size * all_sizes[iter] * sizeof
   free(C);
   free(all_sizes);
   free(time_records);
+
+#ifdef CUDA
+  cudaFree(d_A);
+  cudaFree(d_C);
+#endif
 
   MPI_Finalize();
 

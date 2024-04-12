@@ -10,11 +10,11 @@
 #SBATCH --ntasks-per-node=4          # Number of tasks (or processes) per node
 #SBATCH --cpus-per-task=5           # Number of CPU cores per task
 #SBATCH --gres=gpu:4
-#SBATCH --mem=10G
+#SBATCH --mem=30G
 #SBATCH --time=09:05:00
 
 nproc=4      #number of MPI-processes
-matsize=5000
+matsize=50
 
 # Standard preamble
 echo "---------------------------------------------"
@@ -53,7 +53,7 @@ export OMP_PROC_BIND=close
 # Comment after first time:
 # echo "time(s),rank-worker,number-of-nodes,algorithm,thing-measured" > data.csv
 
-mpirun -np $nproc ./main.x $matsize >> data.csv
+mpirun -np $nproc ./main.x $matsize >> gpudata.csv
 
 echo "........................."
 echo "   DONE!"
