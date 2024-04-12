@@ -1,15 +1,21 @@
-SHELL=/bin/bash
+## Standard preamble 
 
+SHELL=/bin/bash
 CC=mpicc
 NVCC=nvcc
-
 mainfile=main.c
 
 OBJDIR=obj
 SRCDIR=src
 INCLUDEDIR=include
-
 INCLUDELIBS=-fopenmp
+
+##  Standard compiler flags
+
+CFLAGS=-I$(INCLUDEDIR) -Wall -Wextra -march=native $(INCLUDELIBS) $(EXTRAFLAGS)
+OBJFLAGS=-I$(INCLUDEDIR) -Wall -Wextra -march=native $(INCLUDELIBS) $(EXTRAFLAGS)
+
+##  Debug flags
 
 # Uncomment the following line to enable it
 # EXTRAFLAGS+=-DDEBUG
@@ -23,10 +29,13 @@ INCLUDELIBS=-fopenmp
 
 EXTRAFLAGS+=-O3  # kept separate because causes issues with printing order in debug mode
 
-CFLAGS=-I$(INCLUDEDIR) -Wall -Wextra -march=native $(INCLUDELIBS) $(EXTRAFLAGS)
-OBJFLAGS=-I$(INCLUDEDIR) -Wall -Wextra -march=native $(INCLUDELIBS) $(EXTRAFLAGS)
+
+## Implementation specific things
 
 BLASFLAGS=-DOPENBLAS -I/usr/include/openblas -L/usr/lib -lopenblas
+CUDAFLAGS=-L/leonardo/prod/opt/libraries/openmpi/4.1.6/nvhpc--23.11/lib -lmpi -lcudart -lcublas
+
+## Objects definitions
 
 OBJS=$(OBJDIR)/main.o \
      $(OBJDIR)/init.o \
@@ -42,6 +51,8 @@ OBJS_CUDA=$(OBJDIR)/cuda_main.o \
            $(OBJDIR)/cuda_product.o \
            $(OBJDIR)/cuda_stopwatch.o
 
+##  Compilation 
+
 main.x: $(OBJS)
 	$(CC) $(OBJFLAGS) -o $@ $^
 
@@ -56,7 +67,7 @@ blas: $(OBJS)
 	$(CC) $(OBJFLAGS) -o main.x $^ $(BLASFLAGS)
 
 cuda: $(OBJS_CUDA)
-	$(NVCC) -I$(INCLUDEDIR) -DCUDA -o main.x $^
+	$(NVCC) -I$(INCLUDEDIR) -DCUDA -o main.x $^ $(CUDAFLAGS) 
 
 $(OBJDIR)/cuda_main.o: $(mainfile)
 	$(NVCC) -I$(INCLUDEDIR) -DCUDA -c -o $@ $^
@@ -64,8 +75,9 @@ $(OBJDIR)/cuda_main.o: $(mainfile)
 $(OBJDIR)/cuda_%.o: $(SRCDIR)/%.c
 	$(NVCC) -I$(INCLUDEDIR) -DCUDA -c -o $@ $^
 
-# needed
+# needed?
 .PHONY: clean
 
 clean:
 	rm -f $(OBJDIR)/*.o main.x
+
