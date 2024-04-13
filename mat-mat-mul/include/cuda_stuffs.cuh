@@ -5,7 +5,7 @@
 
 #ifndef GET_READY_ON_GPU
 #define GET_READY_ON_GPU
-  void get_ready_on_gpu(double* A, double* B, double* C, long int N, long int local_size, int rank, int size, double* time_records, int* time_counter);
+  void get_ready_on_gpu(double* A, double* C, double* d_A, double* d_C, long int N, long int local_size, int rank, int size, double* time_records, int* time_counter)
 #endif
 
 #ifndef COMPUTE_BLOCK_RESULT_CUDA

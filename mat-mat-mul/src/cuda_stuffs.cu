@@ -24,11 +24,8 @@ void assign_gpu_to_process(int rank)
   cudaSetDevice(rank % n_gpus);
 }
 
-void get_ready_on_gpu(double* A, double* B, double* C, long int N, long int local_size, int rank, int size, double* time_records, int* time_counter)
+void get_ready_on_gpu(double* A, double* C, double* d_A, double* d_C, long int N, long int local_size, int rank, int size, double* time_records, int* time_counter)
 {
-  double *d_A;
-  double *d_B;
-  double *d_C;
   cudaMalloc((void **) &d_A, local_size * N * sizeof(double));
   cudaMalloc((void **) &d_C, local_size * N * sizeof(double));
   cudaMemcpy(d_A, A, local_size * N * sizeof(double), cudaMemcpyHostToDevice);

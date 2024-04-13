@@ -27,7 +27,10 @@
 #include "column_gathering.h"
 #include "product.h"
 #include "stopwatch.h"
+
+#ifdef CUDA
 #include "cuda_stuffs.cuh"
+#endif
 
 int main(int argc, char* argv[])
 {
@@ -78,7 +81,9 @@ int main(int argc, char* argv[])
   record_time(time_records, time_counter);  //t1 ; t_cuda_1
 
 #ifdef CUDA
-  get_ready_on_gpu(A, B, C, N, local_size, rank, size, time_records, time_counter);
+  double *d_A;
+  double *d_C;
+  get_ready_on_gpu(A, B, C,, N, local_size, rank, size, time_records, time_counter);
 #endif
 
 #if defined(DEBUG) | defined(DEBUG_INIT)
