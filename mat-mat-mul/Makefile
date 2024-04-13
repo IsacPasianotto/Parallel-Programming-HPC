@@ -33,7 +33,7 @@ EXTRAFLAGS+=-O3  # kept separate because causes issues with printing order in de
 ## Implementation specific things
 
 BLASFLAGS=-DOPENBLAS -I/usr/include/openblas -L/usr/lib -lopenblas
-CUDAFLAGS=-L/leonardo/prod/opt/libraries/openmpi/4.1.6/nvhpc--23.11/lib -lmpi -lcudart -lcublas
+CUDAFLAGS=-I$(INCLUDEDIR) -L/leonardo/prod/opt/libraries/openmpi/4.1.6/nvhpc--23.11/lib -lmpi -lcudart -lcublas
 
 ## Objects definitions
 
@@ -42,17 +42,21 @@ OBJS=$(OBJDIR)/main.o \
      $(OBJDIR)/debug.o \
      $(OBJDIR)/column_gathering.o \
      $(OBJDIR)/product.o \
-     $(OBJDIR)/stopwatch.o
-
-OBJS_CUDA=$(OBJDIR)/cuda_main.o \
-           $(OBJDIR)/cuda_init.o \
-           $(OBJDIR)/cuda_debug.o \
-           $(OBJDIR)/cuda_column_gathering.o \
-           $(OBJDIR)/cuda_product.o \
-           $(OBJDIR)/cuda_stopwatch.o \
-		   $(OBJDIR)/cuda_stuffs.o 
+     $(OBJDIR)/stopwatch.o \
+	 $(OBJDIR)/cuda_stuffs.o 
 
 ##  Compilation 
+
+blas: CFLAGS += $(BLASFLAGS)
+blas: $(OBJS)
+	$(CC) $(OBJFLAGS) -o main.x $^ $(BLASFLAGS)
+
+cuda: CC := $(NVCC)
+cuda: CFLAGS := $(CUDAFLAGS)
+cuda: OBJFLAGS := $(CUDAFLAGS)
+cuda: $(OBJS)
+	$(NVCC) $(CUDAFLAGS) -o main.x $^ $(CUDAFLAGS)
+
 
 main.x: $(OBJS)
 	$(CC) $(OBJFLAGS) -o $@ $^
@@ -63,21 +67,8 @@ $(OBJDIR)/main.o: $(mainfile)
 $(OBJDIR)/%.o: $(SRCDIR)/%.c
 	$(CC) $(CFLAGS) -c -o $@ $^
 
-blas: CFLAGS += $(BLASFLAGS)
-blas: $(OBJS)
-	$(CC) $(OBJFLAGS) -o main.x $^ $(BLASFLAGS)
 
-cuda: $(OBJS_CUDA)
-	$(NVCC) -I$(INCLUDEDIR) -DCUDA -o main.x $^ $(CUDAFLAGS) 
 
-$(OBJDIR)/cuda_main.o: $(mainfile)
-	$(NVCC) -I$(INCLUDEDIR) -DCUDA -c -o $@ $^ $(CUDAFLAGS)
-
-$(OBJDIR)/cuda_%.o: $(SRCDIR)/%.c
-	$(NVCC) -I$(INCLUDEDIR) -DCUDA -c -o $@ $^ $(CUDAFLAGS)
-
-$(OBJDIR)/cuda_stuffs.o: $(SRCDIR)/cuda_stuffs.cu  # Corrected naming here
-	$(NVCC) -I$(INCLUDEDIR) -DCUDA -c -o $@ $^ $(CUDAFLAGS)
 
 # needed?
 .PHONY: clean
