@@ -3,7 +3,7 @@
 SHELL=/bin/bash
 CC=mpicc
 NVCC=nvcc
-mainfile=main.c
+mainfile=main.cu
 
 OBJDIR=obj
 SRCDIR=src

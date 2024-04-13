@@ -20,6 +20,7 @@
 #ifdef CUDA
 #include <cuda_runtime.h>
 #include <cublas_v2.h>
+#define N_THREADS_PER_BLOCK 32
 #endif
 
 #include "init.h"
@@ -179,7 +180,6 @@ int main(int argc, char* argv[])
     double beta = 1.0;
     cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, local_size, all_sizes[iter], N, &alpha, d_A, N, device_B_buffer, all_sizes[iter], &beta, device_C_block, all_sizes[iter]);
 
-    const int N_TRHEADS_PER_BLOCK = 32;
     dim3 threads(N_THREADS_PER_BLOCK, N_THREADS_PER_BLOCK);
     dim3 blocks((local_size + N_THREADS_PER_BLOCK - 1) / N_THREADS_PER_BLOCK, (all_sizes[iter] + N_THREADS_PER_BLOCK - 1) / N_THREADS_PER_BLOCK);
     // cuda_copy_block_to_global_c<<<blocks, threads>>>(d_C, device_C_block, N, local_size, all_sizes, size, iter);
@@ -211,13 +211,16 @@ int main(int argc, char* argv[])
 
     free(sendcounts);
     free(displs);
-    free(local_C_block);
     free(buffer);
 
 #ifdef CUDA
     cublasDestroy(handle);
     cudaFree(device_C_block);
     cudaFree(device_B_buffer);
+#endif
+
+#ifndef CUDA
+    free(local_C_block);
 #endif
 
   } // loop over the number of processes
