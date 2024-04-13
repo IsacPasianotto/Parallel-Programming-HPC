@@ -151,7 +151,7 @@ int main(int argc, char* argv[])
 #ifdef CUDA
     double* device_C_block;
     double* device_B_buffer;
-    compute_block_result_cuda(d_A, d_C, buffer, local_C_block, device_C_block, device_B_buffer, buffer_size, N, local_size, all_sizes, size, iter, time_records, time_counter);
+    compute_block_result_cuda(d_A, buffer, local_C_block, device_C_block, device_B_buffer, buffer_size, N, local_size, all_sizes, size, iter, time_records, time_counter);
 #else // not CUDA
 #ifdef OPENBLAS
     cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, local_size, all_sizes[iter], N, 1.0, A, N, buffer, all_sizes[iter], 1.0, local_C_block, all_sizes[iter]);

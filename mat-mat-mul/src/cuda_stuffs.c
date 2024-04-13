@@ -25,27 +25,14 @@ void assign_gpu_to_process(int rank)
   cudaSetDevice(rank % n_gpus);
 }
 
-void get_ready_on_gpu(double* A, double* C, double* d_A, double* d_C, long int N, long int local_size, int rank, int size, double* time_records, int* time_counter)
+void get_ready_on_gpu(double* A, double* d_A,, long int N, long int local_size, int rank, int size, double* time_records, int* time_counter)
 {
   cudaMalloc((void **) &d_A, local_size * N * sizeof(double));
-  cudaMalloc((void **) &d_C, local_size * N * sizeof(double));
   cudaMemcpy(d_A, A, local_size * N * sizeof(double), cudaMemcpyHostToDevice);
   record_time(time_records, time_counter);  // -- , t_cuda_2
 }
 
-__global__ void cuda_copy_block_to_global_c(double* d_C, double* local_C_block, long int N, long int local_size, int* all_sizes, int size, int iter)
-{
-  long int index = iter * ((N % size) > 0 ? N / size + 1 : N / size);
-  int i = blockIdx.x * blockDim.x + threadIdx.x;
-  int j = blockIdx.y * blockDim.y + threadIdx.y;
-  if (i < local_size && j < all_sizes[iter])
-  {
-    d_C[index + i * N + j] = local_C_block[i * all_sizes[iter] + j];
-  }
-}
-
-
-void compute_block_result_cuda(double* d_A, double* d_C, double* buffer, double* local_C_block, double*device_C_block, double* device_B_buffer, long int buffer_size, long int N, long int local_size, int* all_sizes, int size, int iter, double* time_records, int* time_counter)
+void compute_block_result_cuda(double* d_A, double* buffer, double* local_C_block, double*device_C_block, double* device_B_buffer, long int buffer_size, long int N, long int local_size, int* all_sizes, int size, int iter, double* time_records, int* time_counter)
 {
 
   record_time(time_records, time_counter);  // --- ;  t_cuda_{7 + 9 * iter}
