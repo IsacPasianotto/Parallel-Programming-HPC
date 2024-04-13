@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <sys/time.h>
 
-
 #include "stopwatch.h"
 
 
@@ -31,5 +30,19 @@ void print_time_records(double* time_records, int rank, int size, const char* pr
     printf("%f,%d,%d,%s,%s\n", time_records[4 + 5*i] - time_records[3 + 5*i], rank, size, program_type, "get-ready-allgatherv");
     printf("%f,%d,%d,%s,%s\n", time_records[5 + 5*i] - time_records[4 + 5*i], rank, size, program_type, "perform-allgatherv");
     printf("%f,%d,%d,%s,%s\n", time_records[6 + 5*i] - time_records[5 + 5*i], rank, size, program_type, "compute-block-C-result");
+  }
+}
+
+void print_time_records_cuda(double* time_records, int rank, int size, const char* program_type)
+{
+  printf("%f,%d,%d,%s,%s\n", time_records[1] - time_records[0], rank, size, program_type, "init-A-B-C");
+  printf("%f,%d,%d,%s,%s\n", time_records[2] - time_records[1], rank, size, program_type,"Copy-A-and-C-to-device");
+  for (int i = 0; i < size; i++)
+  {
+    printf("%f,%d,%d,%s,%s\n", time_records[4+ 7*i] - time_records[3 + 7*i], rank, size, program_type, "compute-col-block-B");
+    printf("%f,%d,%d,%s,%s\n", time_records[5+ 7*i] - time_records[4 + 7*i], rank, size, program_type, "get-ready-allgatherv");
+    printf("%f,%d,%d,%s,%s\n", time_records[6+ 7*i] - time_records[5 + 7*i], rank, size, program_type, "perform-allgatherv");
+    printf("%f,%d,%d,%s,%s\n", time_records[8+ 7*i] - time_records[7 + 7*i], rank, size, program_type, "copy-the-B-column-block to-device");
+    printf("%f,%d,%d,%s,%s\n", time_records[9+ 7*i] - time_records[8 + 7*i], rank, size, program_type, "compute-block-C-result");
   }
 }
