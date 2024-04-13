@@ -42,16 +42,3 @@ void copy_block_to_global_C(double* C, double* local_C_block, long int N, long i
     }
   }
 }
-
-#ifdef CUDA
-__global__ void cuda_copy_block_to_global_c(double* d_C, double* local_C_block, long int N, long int local_size, int* all_sizes, int size, int iter)
-{
-  long int index = iter * ((N % size) > 0 ? N / size + 1 : N / size);
-  int i = blockIdx.x * blockDim.x + threadIdx.x;
-  int j = blockIdx.y * blockDim.y + threadIdx.y;
-  if (i < local_size && j < all_sizes[iter])
-  {
-    d_C[index + i * N + j] = local_C_block[i * all_sizes[iter] + j];
-  }
-}
-#endif
