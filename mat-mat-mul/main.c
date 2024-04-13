@@ -83,7 +83,7 @@ int main(int argc, char* argv[])
 #ifdef CUDA
   double *d_A;
   double *d_C;
-  get_ready_on_gpu(A, B, C,, N, local_size, rank, size, time_records, time_counter);
+  get_ready_on_gpu(A, C, d_A, d_C, N, local_size, rank, size, time_records, time_counter);
 #endif
 
 #if defined(DEBUG) | defined(DEBUG_INIT)
@@ -149,7 +149,9 @@ int main(int argc, char* argv[])
 
 
 #ifdef CUDA
-    compute_block_result_cuda(d_A, d_C, buffer, N, local_size, all_sizes, size, iter, time_records, time_counter);
+    double* device_C_block;
+    double* device_B_buffer;
+    compute_block_result_cuda(d_A, d_C, buffer, device_C_block, device_B_buffer, buffer_size, N, local_size, all_sizes, size, iter, time_records, time_counter);
 #else // not CUDA
 
     double* local_C_block = local_block;    // local_block is not needed anymore, so we can reuse it and save memory
@@ -170,11 +172,12 @@ int main(int argc, char* argv[])
 
     free(sendcounts);
     free(displs);
-    free(local_C_block);
     free(buffer);
 
 #ifdef CUDA
-    free_gpu_memory_loop(device_C_block, device_B_buffer, handle);
+    free_gpu_memory_loop(device_C_block, device_B_buffer);
+#else
+    free(local_C_block);
 #endif
 
   } // loop over the number of processes

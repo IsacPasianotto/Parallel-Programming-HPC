@@ -49,7 +49,8 @@ OBJS_CUDA=$(OBJDIR)/cuda_main.o \
            $(OBJDIR)/cuda_debug.o \
            $(OBJDIR)/cuda_column_gathering.o \
            $(OBJDIR)/cuda_product.o \
-           $(OBJDIR)/cuda_stopwatch.o
+           $(OBJDIR)/cuda_stopwatch.o \
+		   $(OBJDIR)/cuda_stuffs.o 
 
 ##  Compilation 
 
@@ -73,6 +74,9 @@ $(OBJDIR)/cuda_main.o: $(mainfile)
 	$(NVCC) -I$(INCLUDEDIR) -DCUDA -c -o $@ $^ $(CUDAFLAGS)
 
 $(OBJDIR)/cuda_%.o: $(SRCDIR)/%.c
+	$(NVCC) -I$(INCLUDEDIR) -DCUDA -c -o $@ $^ $(CUDAFLAGS)
+
+$(OBJDIR)/cuda_stuffs.o: $(SRCDIR)/cuda_stuffs.cu  # Corrected naming here
 	$(NVCC) -I$(INCLUDEDIR) -DCUDA -c -o $@ $^ $(CUDAFLAGS)
 
 # needed?

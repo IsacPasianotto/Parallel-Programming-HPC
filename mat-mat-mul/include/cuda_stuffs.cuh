@@ -10,7 +10,7 @@
 
 #ifndef COMPUTE_BLOCK_RESULT_CUDA
 #define COMPUTE_BLOCK_RESULT_CUDA
-  void compute_block_result_cuda(double* d_A, double* d_C, double* buffer, double*device_C_block, double* device_B_buffer, long int N, long int local_size, int* all_sizes, int size, int iter, double* time_records, int* time_counter);
+  void compute_block_result_cuda(double* d_A, double* d_C, double* buffer, double*device_C_block, double* device_B_buffer, long int buffer_size, long int N, long int local_size, int* all_sizes, int size, int iter, double* time_records, int* time_counter);
 #endif
 
 #ifndef CUDA_COPY_BLOCK_TO_GLOBAL_C
