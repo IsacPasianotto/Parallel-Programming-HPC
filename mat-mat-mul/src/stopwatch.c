@@ -39,10 +39,12 @@ void print_time_records_cuda(double* time_records, int rank, int size, const cha
   printf("%f,%d,%d,%s,%s\n", time_records[2] - time_records[1], rank, size, program_type,"Copy-A-and-C-to-device");
   for (int i = 0; i < size; i++)
   {
-    printf("%f,%d,%d,%s,%s\n", time_records[4+ 7*i] - time_records[3 + 7*i], rank, size, program_type, "compute-col-block-B");
-    printf("%f,%d,%d,%s,%s\n", time_records[5+ 7*i] - time_records[4 + 7*i], rank, size, program_type, "get-ready-allgatherv");
-    printf("%f,%d,%d,%s,%s\n", time_records[6+ 7*i] - time_records[5 + 7*i], rank, size, program_type, "perform-allgatherv");
-    printf("%f,%d,%d,%s,%s\n", time_records[8+ 7*i] - time_records[7 + 7*i], rank, size, program_type, "copy-the-B-column-block to-device");
-    printf("%f,%d,%d,%s,%s\n", time_records[9+ 7*i] - time_records[8 + 7*i], rank, size, program_type, "compute-block-C-result");
+    printf("%f,%d,%d,%s,%s\n", time_records[4+ 9*i] - time_records[3 + 9*i], rank, size, program_type, "compute-col-block-B");
+    printf("%f,%d,%d,%s,%s\n", time_records[5+ 9*i] - time_records[4 + 9*i], rank, size, program_type, "get-ready-allgatherv");
+    printf("%f,%d,%d,%s,%s\n", time_records[6+ 9*i] - time_records[5 + 9*i], rank, size, program_type, "perform-allgatherv");
+    printf("%f,%d,%d,%s,%s\n", time_records[8+ 9*i] - time_records[7 + 9*i], rank, size, program_type, "copy-column-B-cpu-to-gpu");
+    printf("%f,%d,%d,%s,%s\n", time_records[9+ 9*i] - time_records[8 + 9*i], rank, size, program_type, "compute-block-C-result");
+    printf("%f,%d,%d,%s,%s\n", time_records[10+ 9*i] - time_records[9 + 9*i], rank, size, program_type, "copy-block-C-gpu-to-cpu");
+    printf("%f,%d,%d,%s,%s\n", time_records[11+ 9*i] - time_records[10 + 9*i], rank, size, program_type, "move-block-C-to-global-C");
   }
 }

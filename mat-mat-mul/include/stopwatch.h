@@ -16,6 +16,6 @@
 #ifdef CUDA
 #ifndef PRINT_TIME_RECORDS_CUDA
 #define PRINT_TIME_RECORDS_CUDA
-  void print_time_records_cuda(double* time_records, int rank, int size, const char* program_type);
+ void print_time_records_cuda(double* time_records, int rank, int size, const char* program_type);
 #endif
 #endif

@@ -82,8 +82,7 @@ int main(int argc, char* argv[])
 
 #ifdef CUDA
   double *d_A;
-  double *d_C;
-  get_ready_on_gpu(A, C, d_A, d_C, N, local_size, rank, size, time_records, time_counter);
+  get_ready_on_gpu(A, d_A, N, local_size, rank, size, time_records, time_counter);
 #endif
 
 #if defined(DEBUG) | defined(DEBUG_INIT)
@@ -108,7 +107,7 @@ int main(int argc, char* argv[])
      | 2.1. Compute the block of the column             |
      *--------------------------------------------------*/
 
-    record_time(time_records, time_counter);  //t_{2+ 5 * iter}  ;  t_cuda_{3 + 7 * iter}
+    record_time(time_records, time_counter);  //t_{2+ 5 * iter}  ;  t_cuda_{3 + 9 * iter}
 
     long int buffer_size =  (iter < N % size) ? N / size + 1 : N / size;
     double* buffer = (double*) malloc(buffer_size * N * sizeof(double));
@@ -117,7 +116,7 @@ int main(int argc, char* argv[])
     double* local_block = (double*) malloc(local_size * all_sizes[iter] * sizeof(double));
     build_column_block(local_block, B, N, local_size, size, iter, all_sizes);
 
-    record_time(time_records, time_counter);  //t_{3+ 5 * iter} ;  t_cuda_{4 + 7 * iter}
+    record_time(time_records, time_counter);  //t_{3+ 5 * iter} ;  t_cuda_{4 + 9 * iter}
 
 #if defined(DEBUG) | defined(DEBUG_COL_BLOCK)
     debug_col_block(B, local_block, N, local_size, rank, iter, all_sizes);
@@ -133,11 +132,11 @@ int main(int argc, char* argv[])
     compute_receive_counts(sendcounts, all_sizes, size, iter);
     compute_displacements(displs, sendcounts, size);
 
-    record_time(time_records, time_counter);  //t_{4+ 5 * iter}  ;  t_cuda_{5 + 7 * iter}
+    record_time(time_records, time_counter);  //t_{4+ 5 * iter}  ;  t_cuda_{5 + 9 * iter}
 
     MPI_Allgatherv(local_block, local_size * all_sizes[iter], MPI_DOUBLE, buffer, sendcounts, displs, MPI_DOUBLE, MPI_COMM_WORLD);
 
-    record_time(time_records, time_counter);  //t_{5+ 5 * iter}  ;  t_cuda_{6 + 7 * iter}
+    record_time(time_records, time_counter);  //t_{5+ 5 * iter}  ;  t_cuda_{6 + 9 * iter}
 
 #if defined(DEBUG) | defined(DEBUG_COL_GATHER)
     debug_allgatherv(B, local_block, buffer, N, local_size, rank, iter, all_sizes, buffer_size);
@@ -146,25 +145,24 @@ int main(int argc, char* argv[])
     /*--------------------------------------------------*
      | 2.3. Compute the local portion of the product    |
      *--------------------------------------------------*/
-
+    double* local_C_block = local_block;    // local_block is not needed anymore, so we can reuse it and save memory
+    memset(local_C_block, 0.0, local_size * all_sizes[iter] * sizeof(double));
 
 #ifdef CUDA
     double* device_C_block;
     double* device_B_buffer;
-    compute_block_result_cuda(d_A, d_C, buffer, device_C_block, device_B_buffer, buffer_size, N, local_size, all_sizes, size, iter, time_records, time_counter);
+    compute_block_result_cuda(d_A, d_C, buffer, local_C_block, device_C_block, device_B_buffer, buffer_size, N, local_size, all_sizes, size, iter, time_records, time_counter);
 #else // not CUDA
-
-    double* local_C_block = local_block;    // local_block is not needed anymore, so we can reuse it and save memory
-    memset(local_C_block, 0.0, local_size * all_sizes[iter] * sizeof(double));
 #ifdef OPENBLAS
     cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, local_size, all_sizes[iter], N, 1.0, A, N, buffer, all_sizes[iter], 1.0, local_C_block, all_sizes[iter]);
 #else
     compute_block_result_naive(local_C_block, A, buffer, N, local_size, all_sizes, iter);
-#endif
-    copy_block_to_global_C(C, local_C_block, N, local_size, all_sizes, size, iter);
-    record_time(time_records, time_counter);  //t_{6+ 5 * iter} ;  ---
-
+#endif // ifdef OPENBLAS
 #endif // ifdef CUDA
+
+    copy_block_to_global_C(C, local_C_block, N, local_size, all_sizes, size, iter);
+    record_time(time_records, time_counter);  //t_{6+ 5 * iter} ;  t_cuda_{11 + 9 * iter}
+
 
     /*--------------------------------------------------*
      | 2.4. Clean up memory for the loop                |
@@ -220,7 +218,6 @@ int main(int argc, char* argv[])
 
 #ifdef CUDA
   cudaFree(d_A);
-  cudaFree(d_C);
 #endif
 
   MPI_Finalize();

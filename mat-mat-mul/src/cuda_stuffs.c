@@ -4,19 +4,20 @@
 #include <omp.h>
 #include <mpi.h>
 
-
+#ifndef CUDA
 #include <cuda_runtime.h>
 #include <cublas_v2.h>
-#define N_THREADS_PER_BLOCK 32
+#endif
 
 #include "../include/init.h"
 #include "../include/debug.h"
 #include "../include/column_gathering.h"
 #include "../include/product.h"
 #include "../include/stopwatch.h"
-#include "../include/cuda_stuffs.cuh"
+#include "../include/cuda_stuffs.h"
 
 
+#ifndef CUDA
 void assign_gpu_to_process(int rank)
 {
   int n_gpus;
@@ -29,8 +30,6 @@ void get_ready_on_gpu(double* A, double* C, double* d_A, double* d_C, long int N
   cudaMalloc((void **) &d_A, local_size * N * sizeof(double));
   cudaMalloc((void **) &d_C, local_size * N * sizeof(double));
   cudaMemcpy(d_A, A, local_size * N * sizeof(double), cudaMemcpyHostToDevice);
-  cudaMemcpy(d_C, C, local_size * N * sizeof(double), cudaMemcpyHostToDevice);
-
   record_time(time_records, time_counter);  // -- , t_cuda_2
 }
 
@@ -46,10 +45,10 @@ __global__ void cuda_copy_block_to_global_c(double* d_C, double* local_C_block, 
 }
 
 
-void compute_block_result_cuda(double* d_A, double* d_C, double* buffer, double*device_C_block, double* device_B_buffer, long int buffer_size, long int N, long int local_size, int* all_sizes, int size, int iter, double* time_records, int* time_counter)
+void compute_block_result_cuda(double* d_A, double* d_C, double* buffer, double* local_C_block, double*device_C_block, double* device_B_buffer, long int buffer_size, long int N, long int local_size, int* all_sizes, int size, int iter, double* time_records, int* time_counter)
 {
 
-  record_time(time_records, time_counter);  // --- ;  t_cuda_{7 + 7 * iter}
+  record_time(time_records, time_counter);  // --- ;  t_cuda_{7 + 9 * iter}
 
   cudaMalloc((void **) &device_C_block, local_size * all_sizes[iter] * sizeof(double));
   cudaMalloc((void **) &device_B_buffer, buffer_size * N * sizeof(double));
@@ -57,7 +56,7 @@ void compute_block_result_cuda(double* d_A, double* d_C, double* buffer, double*
   cudaMemcpy(device_B_buffer, buffer, buffer_size * N * sizeof(double), cudaMemcpyHostToDevice);
   cudaMemset(device_C_block, 0.0, local_size * all_sizes[iter] * sizeof(double));
 
-  record_time(time_records, time_counter);  // --- ;  t_cuda_{8 + 7 * iter}
+  record_time(time_records, time_counter);  // --- ;  t_cuda_{8 + 9 * iter}
 
   // perform the product
   cublasHandle_t handle;
@@ -66,13 +65,12 @@ void compute_block_result_cuda(double* d_A, double* d_C, double* buffer, double*
   double beta = 1.0;
   cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, local_size, all_sizes[iter], N, &alpha, d_A, N, device_B_buffer, all_sizes[iter], &beta, device_C_block, all_sizes[iter]);
   cublasDestroy(handle);
+  record_time(time_records, time_counter);  // --- ;  t_cuda_{9 + 9 * iter}
 
-  dim3 threads(N_THREADS_PER_BLOCK, N_THREADS_PER_BLOCK);
-  dim3 blocks((local_size + N_THREADS_PER_BLOCK - 1) / N_THREADS_PER_BLOCK, (all_sizes[iter] + N_THREADS_PER_BLOCK - 1) / N_THREADS_PER_BLOCK);
-  cuda_copy_block_to_global_c<<<blocks, threads>>>(d_C, device_C_block, N, local_size, all_sizes, size, iter);
+  // pass the result to host
+  cudaMemcpy(local_C_block, device_C_block, local_size * all_sizes[iter] * sizeof(double), cudaMemcpyDeviceToHost);
+  record_time(time_records, time_counter);  // --- ;  t_cuda_{10 + 9 * iter}
 
-  cudaDeviceSynchronize();  // wait for the kernel to finish
-  record_time(time_records, time_counter);  // --- ;  t_cuda_{9 + 7 * iter}
 }
 
 
@@ -82,8 +80,4 @@ void free_gpu_memory_loop(double* device_C_block, double* device_B_buffer)
   cudaFree(device_B_buffer);
 }
 
-void free_gpu_memory(double* d_A, double* d_C)
-{
-  cudaFree(d_A);
-  cudaFree(d_C);
-}
+#endif
