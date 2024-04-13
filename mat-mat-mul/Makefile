@@ -33,7 +33,7 @@ EXTRAFLAGS+=-O3  # kept separate because causes issues with printing order in de
 ## Implementation specific things
 
 BLASFLAGS=-DOPENBLAS -I/usr/include/openblas -L/usr/lib -lopenblas
-CUDAFLAGS=-I$(INCLUDEDIR) -L/leonardo/prod/opt/libraries/openmpi/4.1.6/nvhpc--23.11/lib -lmpi -lcudart -lcublas
+CUDAFLAGS=-I$(INCLUDEDIR) -L/leonardo/prod/opt/libraries/openmpi/4.1.6/nvhpc--23.11/lib -lmpi -lcudart -lcublas -DCUDA
 
 ## Objects definitions
 

@@ -52,6 +52,7 @@ void compute_block_result_cuda(double* d_A, double* buffer, double* local_C_bloc
   double beta = 1.0;
   cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, local_size, all_sizes[iter], N, &alpha, d_A, N, device_B_buffer, all_sizes[iter], &beta, device_C_block, all_sizes[iter]);
   cublasDestroy(handle);
+
   record_time(time_records, time_counter);  // --- ;  t_cuda_{9 + 9 * iter}
 
   // pass the result to host

@@ -8,13 +8,18 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=4                   # Every MPI proc is a task --> = n nodes
 #SBATCH --ntasks-per-node=4          # Number of tasks (or processes) per node
-#SBATCH --cpus-per-task=5           # Number of CPU cores per task
+#SBATCH --cpus-per-task=8            # Number of CPU cores per task
 #SBATCH --gres=gpu:4
 #SBATCH --mem=30G
-#SBATCH --time=09:05:00
+#SBATCH --time=00:15:00
+
+
+# on boos_usr_prod:
+#  1socket 32core per node
+#  4 GPUs per node
 
 nproc=4      #number of MPI-processes
-matsize=50
+matsize=5000
 
 # Standard preamble
 echo "---------------------------------------------"
