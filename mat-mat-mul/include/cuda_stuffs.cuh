@@ -5,12 +5,12 @@
 
 #ifndef GET_READY_ON_GPU
 #define GET_READY_ON_GPU
-  void get_ready_on_gpu(double* A, double* C, double* d_A, double* d_C, long int N, long int local_size, int rank, int size, double* time_records, int* time_counter)
+  void get_ready_on_gpu(double* A, double* C, double* d_A, double* d_C, long int N, long int local_size, int rank, int size, double* time_records, int* time_counter);
 #endif
 
 #ifndef COMPUTE_BLOCK_RESULT_CUDA
 #define COMPUTE_BLOCK_RESULT_CUDA
-  void compute_block_result_cuda(double* d_A, double* d_C, double* buffer, long int N, long int local_size, int* all_sizes, int size, int iter, double* time_records, int* time_counter);
+  void compute_block_result_cuda(double* d_A, double* d_C, double* buffer, double*device_C_block, double* device_B_buffer, long int N, long int local_size, int* all_sizes, int size, int iter, double* time_records, int* time_counter);
 #endif
 
 #ifndef CUDA_COPY_BLOCK_TO_GLOBAL_C
@@ -20,7 +20,7 @@
 
 #ifndef FREE_GPU_MEMORY_LOOP
 #define FREE_GPU_MEMORY_LOOP
-  void free_gpu_memory_loop(int* sendcounts, int* displs, double* local_C_block, double* buffer, cublasHandle_t handle, double* device_C_block, double* device_B_buffer);
+  void free_gpu_memory_loop(double* device_C_block, double* device_B_buffer);
 #endif
 
 #ifndef FREE_GPU_MEMORY
