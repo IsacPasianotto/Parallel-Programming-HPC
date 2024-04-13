@@ -1,12 +1,12 @@
 /*---------------------------------------------*
- | file: main.c                                |
- | author: Isac Pasianotto                     |
- | date: 2024-04                               |
- | context: exam of "Parallel programming for  |
- |          HPC". Msc Course in DSSC           |
- | description: main file for the exercise of  |
- |              matrix-matrix multiplication   |
- *---------------------------------------------*/
+| file: main.c                                |
+| author: Isac Pasianotto                     |
+| date: 2024-04                               |
+| context: exam of "Parallel programming for  |
+|          HPC". Msc Course in DSSC           |
+| description: main file for the exercise of  |
+|              matrix-matrix multiplication   |
+*---------------------------------------------*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -28,9 +28,6 @@
 #include "product.h"
 #include "stopwatch.h"
 
-#ifdef CUDA
-#include "cuda_stuffs.h"
-#endif
 
 int main(int argc, char* argv[])
 {
@@ -38,13 +35,16 @@ int main(int argc, char* argv[])
    | 0. Initialization of MPI environment         |
    *---------------------------------------------*/
 
-  MPI_Init(&argc, &argv);
+  int provided;
+  MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
   int rank, size;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
 #ifdef CUDA
-  assign_gpu_to_process(rank);
+  int n_gpus;
+  cudaGetDeviceCount(&n_gpus);
+  cudaSetDevice(rank % n_gpus);
 #endif
 
   /*--------------------------------------------------*
@@ -77,12 +77,13 @@ int main(int argc, char* argv[])
   init_local_matrix(A, local_size * N);
   init_local_matrix(B, local_size * N);
   memset(C, 0.0, local_size * N * sizeof(double));
-
   record_time(time_records, time_counter);  //t1 ; t_cuda_1
 
 #ifdef CUDA
   double *d_A;
-  get_ready_on_gpu(A, d_A, N, local_size, rank, size, time_records, time_counter);
+  cudaMalloc((void **) &d_A, local_size * N * sizeof(double));
+  cudaMemcpy(d_A, A, local_size * N * sizeof(double), cudaMemcpyHostToDevice);
+  record_time(time_records, time_counter);  // -- , t_cuda_2
 #endif
 
 #if defined(DEBUG) | defined(DEBUG_INIT)
@@ -106,7 +107,6 @@ int main(int argc, char* argv[])
     /*--------------------------------------------------*
      | 2.1. Compute the block of the column             |
      *--------------------------------------------------*/
-
     record_time(time_records, time_counter);  //t_{2+ 5 * iter}  ;  t_cuda_{3 + 9 * iter}
 
     long int buffer_size =  (iter < N % size) ? N / size + 1 : N / size;
@@ -145,13 +145,32 @@ int main(int argc, char* argv[])
     /*--------------------------------------------------*
      | 2.3. Compute the local portion of the product    |
      *--------------------------------------------------*/
+
     double* local_C_block = local_block;    // local_block is not needed anymore, so we can reuse it and save memory
     memset(local_C_block, 0.0, local_size * all_sizes[iter] * sizeof(double));
 
+
 #ifdef CUDA
+    // move data to GPU
     double* device_C_block;
     double* device_B_buffer;
-    compute_block_result_cuda(d_A, buffer, local_C_block, device_C_block, device_B_buffer, buffer_size, N, local_size, all_sizes, size, iter, time_records, time_counter);
+    cudaMalloc((void **) &device_C_block, local_size * all_sizes[iter] * sizeof(double));
+    cudaMalloc((void **) &device_B_buffer, buffer_size * N * sizeof(double));
+    cudaMemcpy(device_B_buffer, buffer, buffer_size * N * sizeof(double), cudaMemcpyHostToDevice);
+    cudaMemset(device_C_block, 0.0, local_size * all_sizes[iter] * sizeof(double));
+
+    // Perform the computation
+    cublasHandle_t handle;
+    cublasCreate(&handle);
+    double alpha = 1.0;
+    double beta = 1.0;
+    cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, all_sizes[iter], local_size, N, &alpha, device_B_buffer, all_sizes[iter], d_A, N, &beta, device_C_block, all_sizes[iter]);
+    // cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, local_size, all_sizes[iter], N, &alpha, d_A, N, device_B_buffer, all_sizes[iter], &beta, device_C_block, all_sizes[iter]);
+    cublasDestroy(handle);
+
+    // copy the result back to the host
+    cudaMemcpy(local_C_block, device_C_block, local_size * all_sizes[iter] * sizeof(double), cudaMemcpyDeviceToHost);
+
 #else // not CUDA
 #ifdef OPENBLAS
     cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, local_size, all_sizes[iter], N, 1.0, A, N, buffer, all_sizes[iter], 1.0, local_C_block, all_sizes[iter]);
@@ -163,18 +182,20 @@ int main(int argc, char* argv[])
     copy_block_to_global_C(C, local_C_block, N, local_size, all_sizes, size, iter);
     record_time(time_records, time_counter);  //t_{6+ 5 * iter} ;  t_cuda_{11 + 9 * iter}
 
-
     /*--------------------------------------------------*
-     | 2.4. Clean up memory for the loop                |
-     *--------------------------------------------------*/
+    | 2.4. Clean up memory for the loop                |
+    *--------------------------------------------------*/
 
+#ifdef CUDA
+    cudaFree(device_C_block);
+    cudaFree(device_B_buffer);
+#endif
     free(sendcounts);
     free(displs);
     free(buffer);
+    free(local_block);
 
-#ifdef CUDA
-    free_gpu_memory_loop(device_C_block, device_B_buffer);
-#else
+#ifndef CUDA
     free(local_C_block);
 #endif
 
@@ -188,6 +209,7 @@ int main(int argc, char* argv[])
   debug_product(A, B, C, N, local_size, rank, size);
 #endif
 
+
 #ifdef CUDA
   const char* program_type = "GPU-Cuda";
 #endif
@@ -198,6 +220,7 @@ int main(int argc, char* argv[])
   const char* program_type = "CPU-naive";
 #endif
 
+
 #ifndef NOSTOPWATCH
 #ifndef CUDA
   print_time_records(time_records, rank, size, program_type);
@@ -207,14 +230,15 @@ int main(int argc, char* argv[])
 #endif
 
   /*--------------------------------------------------*
-  | 4. Clean up everything                            |
-  *--------------------------------------------------*/
+   | 4. Clean up everything                           |
+   *--------------------------------------------------*/
 
   free(A);
   free(B);
   free(C);
-  free(all_sizes);
   free(time_records);
+  free(all_sizes);
+
 
 #ifdef CUDA
   cudaFree(d_A);

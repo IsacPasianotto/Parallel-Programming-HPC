@@ -42,8 +42,7 @@ OBJS=$(OBJDIR)/main.o \
      $(OBJDIR)/debug.o \
      $(OBJDIR)/column_gathering.o \
      $(OBJDIR)/product.o \
-     $(OBJDIR)/stopwatch.o \
-	 $(OBJDIR)/cuda_stuffs.o 
+     $(OBJDIR)/stopwatch.o
 
 ##  Compilation 
 
