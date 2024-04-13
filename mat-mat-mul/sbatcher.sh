@@ -5,12 +5,12 @@
 #SBATCH --account ict24_dssc_gpu
 #  #SBATCH --partition=dcgp_usr_prod     # used to CPU computation
 #SBATCH --partition=boost_usr_prod     # used to GPU computation
-#SBATCH --nodes=1
-#SBATCH --ntasks=4                   # Every MPI proc is a task --> = n nodes
+#SBATCH --nodes=64
+#SBATCH --ntasks=256                   # Every MPI proc is a task --> = n nodes
 #SBATCH --ntasks-per-node=4          # Number of tasks (or processes) per node
 #SBATCH --cpus-per-task=8            # Number of CPU cores per task
 #SBATCH --gres=gpu:4
-#SBATCH --mem=30G
+#SBATCH --mem=480G
 #SBATCH --time=00:15:00
 
 
@@ -18,8 +18,8 @@
 #  1socket 32core per node
 #  4 GPUs per node
 
-nproc=4      #number of MPI-processes
-matsize=5000
+nproc=256      #number of MPI-processes
+matsize=75000
 
 # Standard preamble
 echo "---------------------------------------------"
@@ -56,9 +56,9 @@ export OMP_PROC_BIND=close
 # export OMP_NUM_THREADS=56
 
 # Comment after first time:
-# echo "time(s),rank-worker,number-of-nodes,algorithm,thing-measured" > data.csv
+# echo "time(s),rank-worker,number-of-nodes,algorithm,thing-measured" > gpudata75k.csv
 
-mpirun -np $nproc ./main.x $matsize >> gpudata.csv
+mpirun -np $nproc ./main.x $matsize >> gpudata75k.csv
 
 echo "........................."
 echo "   DONE!"

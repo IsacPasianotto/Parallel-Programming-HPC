@@ -62,7 +62,12 @@ int main(int argc, char* argv[])
 
   int tc = 0;
   int* time_counter = &tc;
+#ifndef CUDA
   double* time_records = (double*) malloc( (2 + 5*size) * sizeof(double));
+#else 
+  double* time_records = (double*) malloc( (3 + 9*size)* sizeof(double));
+#endif
+
   memset(time_records, 0.0, (2 + 5*size) * sizeof(double));
 
   record_time(time_records, time_counter);    //t0 ; t_cuda_0
@@ -151,6 +156,9 @@ int main(int argc, char* argv[])
 
 
 #ifdef CUDA
+    
+    record_time(time_records, time_counter);  //t_{5+ 5 * iter}  ;  t_cuda_{7 + 9 * iter}
+    
     // move data to GPU
     double* device_C_block;
     double* device_B_buffer;
@@ -158,6 +166,8 @@ int main(int argc, char* argv[])
     cudaMalloc((void **) &device_B_buffer, buffer_size * N * sizeof(double));
     cudaMemcpy(device_B_buffer, buffer, buffer_size * N * sizeof(double), cudaMemcpyHostToDevice);
     cudaMemset(device_C_block, 0.0, local_size * all_sizes[iter] * sizeof(double));
+
+    record_time(time_records, time_counter);  //t_{5+ 5 * iter}  ;  t_cuda_{8 + 9 * iter}
 
     // Perform the computation
     cublasHandle_t handle;
@@ -168,8 +178,12 @@ int main(int argc, char* argv[])
     // cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, local_size, all_sizes[iter], N, &alpha, d_A, N, device_B_buffer, all_sizes[iter], &beta, device_C_block, all_sizes[iter]);
     cublasDestroy(handle);
 
+    record_time(time_records, time_counter);  //t_{5+ 5 * iter}  ;  t_cuda_{9 + 9 * iter}
+
     // copy the result back to the host
     cudaMemcpy(local_C_block, device_C_block, local_size * all_sizes[iter] * sizeof(double), cudaMemcpyDeviceToHost);
+
+    record_time(time_records, time_counter);  //t_{5+ 5 * iter}  ;  t_cuda_{10 + 9 * iter}
 
 #else // not CUDA
 #ifdef OPENBLAS
