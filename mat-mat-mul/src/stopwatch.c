@@ -1,3 +1,16 @@
+/*----------------------------------------------*
+| file: stopwatch.c                            |
+| author: Isac Pasianotto                      |
+| date: 2024-04                                |
+| context: exam of "Parallel programming for   |
+|          HPC". Msc Course in DSSC            |
+| description: All the logic about time records|
+|      used in the program. Here there are also|
+|      defined the functions to print out the  |
+|      performance of the algorithm.           |
+| note:  The prints of this function are meant |
+|     to be re-directed into a csv file        |
+*----------------------------------------------*/
 #include <stdio.h>
 #include <sys/time.h>
 

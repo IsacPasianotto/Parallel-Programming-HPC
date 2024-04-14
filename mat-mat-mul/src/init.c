@@ -1,3 +1,13 @@
+/*-----------------------------------------------*
+| file: init.c.c                                 |
+| author: Isac Pasianotto                        |
+| date: 2024-04                                  |
+| context: exam of "Parallel programming for     |
+|          HPC". Msc Course in DSSC              |
+| description: function that randomly initialize |
+|    A matrix. In case of SMALL_INTS, the matrix |
+|    is initialized to integers to help debugging|
+*------------------------------------------------*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <omp.h>

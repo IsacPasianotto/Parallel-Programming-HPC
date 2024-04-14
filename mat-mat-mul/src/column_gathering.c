@@ -1,3 +1,13 @@
+/*---------------------------------------------*
+| file: column_gathering.c                    |
+| author: Isac Pasianotto                     |
+| date: 2024-04                               |
+| context: exam of "Parallel programming for  |
+|          HPC". Msc Course in DSSC           |
+| description: functions that makes possible  |
+|      communicate the columns of the B matrix|
+|      among different processes              |
+*---------------------------------------------*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <omp.h>

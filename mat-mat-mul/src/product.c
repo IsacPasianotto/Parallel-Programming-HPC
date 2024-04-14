@@ -1,3 +1,15 @@
+/*--------------------------------------------*
+| file: product.c                             |
+| author: Isac Pasianotto                     |
+| date: 2024-04                               |
+| context: exam of "Parallel programming for  |
+|          HPC". Msc Course in DSSC           |
+| description: functions that implements the  |
+|      "naive" part of the exercise. It       |
+|      performs a matrix-matrix multiplication|
+|      with the classic 3-nested loop         |
+*---------------------------------------------*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <omp.h>

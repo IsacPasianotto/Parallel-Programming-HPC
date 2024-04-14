@@ -1,3 +1,14 @@
+/*---------------------------------------------*
+| file: debug.c                    |
+| author: Isac Pasianotto                     |
+| date: 2024-04                               |
+| context: exam of "Parallel programming for  |
+|          HPC". Msc Course in DSSC           |
+| description: set of function which are not  |
+|       part of the main logic of the program.|
+|       they were used only to assess the     |
+|       correctness of the rest of the code.  |
+*---------------------------------------------*/
 #include<stdio.h>
 #include<stdlib.h>
 #include<mpi.h>

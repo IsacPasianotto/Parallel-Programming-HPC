@@ -7,6 +7,7 @@
 | description: main file for the exercise of  |
 |              matrix-matrix multiplication   |
 *---------------------------------------------*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -154,7 +155,6 @@ int main(int argc, char* argv[])
     double* local_C_block = local_block;    // local_block is not needed anymore, so we can reuse it and save memory
     memset(local_C_block, 0.0, local_size * all_sizes[iter] * sizeof(double));
 
-
 #ifdef CUDA
     
     record_time(time_records, time_counter);  //t_{5+ 5 * iter}  ;  t_cuda_{7 + 9 * iter}
@@ -175,7 +175,6 @@ int main(int argc, char* argv[])
     double alpha = 1.0;
     double beta = 1.0;
     cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, all_sizes[iter], local_size, N, &alpha, device_B_buffer, all_sizes[iter], d_A, N, &beta, device_C_block, all_sizes[iter]);
-    // cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, local_size, all_sizes[iter], N, &alpha, d_A, N, device_B_buffer, all_sizes[iter], &beta, device_C_block, all_sizes[iter]);
     cublasDestroy(handle);
 
     record_time(time_records, time_counter);  //t_{5+ 5 * iter}  ;  t_cuda_{9 + 9 * iter}
