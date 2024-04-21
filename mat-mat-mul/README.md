@@ -5,8 +5,8 @@
 - [Description](#description)
   * [Main idea](#main-idea)
   * [Implementation details](#implementation-details)
-  * [How to compile and run the code](#how-to-compile-and-run-the-code)
-  * [Results](#results)
+- [How to compile and run the code](#how-to-compile-and-run-the-code)
+- [Results](#results)
 
 ## Description
 

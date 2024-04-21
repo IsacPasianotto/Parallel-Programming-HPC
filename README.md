@@ -3,6 +3,14 @@ This repo was made for the "Parallel Programming for HPC" exam at the University
 
 ***Author***: [Isac Pasianoto](https://github.com/IsacPasianotto/)
 
+- - - 
+
+# TODO: 
+
+- [ ] Add the comments to plot in `mat-mat-mul` exercise
+- [ ] Prepare a report for each exercise ($\simeq$ 1 page per exercise)
+- 
+
 
 :> [!WARNING]
 > This repository is a work in progress and will be updated as soon as possible.
@@ -10,6 +18,8 @@ This repo was made for the "Parallel Programming for HPC" exam at the University
 > assigned during this. 
 
 
+
 ## Table of Contents
 
-- [`mat-mat-mul`](./mat-mat-mul): Implementation of the distributed computation of the *matrix-matrix multiplication* in `C`. 
+- [`mat-mat-mul`](./mat-mat-mul): Implementation of the distributed computation of the *matrix-matrix multiplication* in `C`, done both on CPU and GPU, using `OpenMPI`, `OpenMP`, and `CUDA`.
+- [`jacobi`](./jacobi): Porting of a [given code](./jacobi/original_code.c) from CPU to GPU, using `openACC`. 
