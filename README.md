@@ -22,4 +22,4 @@ This repo was made for the "Parallel Programming for HPC" exam at the University
 ## Table of Contents
 
 - [`mat-mat-mul`](./mat-mat-mul): Implementation of the distributed computation of the *matrix-matrix multiplication* in `C`, done both on CPU and GPU, using `OpenMPI`, `OpenMP`, and `CUDA`.
-- [`jacobi`](./jacobi): Porting of a [given code](./jacobi/original_code.c) from CPU to GPU, using `openACC`. 
+- [`jacobi`](./jacobi): Porting of a [given code](./jacobi/resources/original_code.c) from CPU to GPU, using `openACC` and distributed with `OpenMPI`.

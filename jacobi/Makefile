@@ -5,8 +5,9 @@ it  = 100
 r = 3
 c = 3
 
-CC=cc
-CFLAGS=-O3
+CC=mpicc
+# enable the openACC compiler
+CFLAGS=-O3 -fopenacc -lm
 
 SRCS=$(wildcard *.c)
 EXE=$(SRCS:.c=.x)
