@@ -25,6 +25,7 @@
 
 // save matrix to file
 void save_gnuplot( double *M, size_t dim );
+void save_gnuplot_parallel_bin( double* M, size_t dimension, size_t local_size, int rank, int size );
 void save_gnuplot_parallel( double* M, size_t dimension, size_t local_size, int rank, int size );
 // evolve Jacobi
 void evolve( double * matrix, double *matrix_new, size_t dimension );
@@ -180,6 +181,7 @@ int main(int argc, char* argv[])
   // }
   // t_end = seconds();
 
+  t_start = seconds();
 
   // Now the situation is a little bit more complex: 
   #pragma acc enter data copyin( matrix[:(dimension+2)*(local_size+2)], matrix_new[:(dimension+2)*(local_size+2)] )
@@ -190,7 +192,7 @@ int main(int argc, char* argv[])
     int proc_above = rank > 0 ? rank-1 : MPI_PROC_NULL;
     int proc_below = rank < size-1 ? rank+1 : MPI_PROC_NULL;
 
-    double time = seconds();
+   //  double t_start = seconds();
 
     // perform the communication between data in the gpus without passing through the cpu
     #pragma acc host_data use_device(matrix)
@@ -295,7 +297,7 @@ void save_gnuplot( double *M, size_t dimension )
 }
 
 
-void save_gnuplot_parallel( double* M, size_t dimension, size_t local_size, int rank, int size ) 
+void save_gnuplot_parallel_bin( double* M, size_t dimension, size_t local_size, int rank, int size ) 
 {
 
   // use MPI_IO to save the data in parallel
@@ -313,6 +315,27 @@ void save_gnuplot_parallel( double* M, size_t dimension, size_t local_size, int 
   MPI_File_close(&fh);
 }
 
+void save_gnuplot_parallel(double* M, size_t dimension, size_t local_size, int rank, int size)
+{
+    char filename[50];
+    sprintf(filename, "solution_%d.dat", rank); // Each process writes to its own file
+    
+    FILE *file = fopen(filename, "w");
+    if (file == NULL) {
+        fprintf(stderr, "Error opening file for writing.\n");
+        return;
+    }
+    
+    // Write data to the file
+    for (size_t i = 0; i < local_size; ++i) {
+        for (size_t j = 0; j < dimension + 2; ++j) {
+            fprintf(file, "%f\t", M[i * (dimension + 2) + j]);
+        }
+        fprintf(file, "\n");
+    }
+    
+    fclose(file);
+}
 
 
 // A Simple timer for measuring the walltime

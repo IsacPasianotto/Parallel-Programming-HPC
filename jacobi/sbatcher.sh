@@ -19,8 +19,8 @@
 #       4 GPUs per node
 
 nproc=8      #number of MPI-processes
-matsize=20
-niter=1
+matsize=8
+niter=10
 
 # Standard preamble
 echo "---------------------------------------------"
