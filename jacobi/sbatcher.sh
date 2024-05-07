@@ -19,7 +19,7 @@
 #       4 GPUs per node
 
 nproc=8      #number of MPI-processes
-matsize=75000
+matsize=20
 niter=1
 
 # Standard preamble
@@ -34,8 +34,7 @@ echo "---------------------------------------------"
 # TODO: change the module load commands
 #       according to the architecture you are using
 
-module load openmpi/4.1.6--gcc--12.2.0
-module load openblas/0.3.24--gcc--12.2.0
+module load openmpi/4.1.6--nvhpc--23.11
 
 # Remove old files if any exist and then compile
 make clean
@@ -53,7 +52,7 @@ export OMP_PROC_BIND=close
 
 # Comment after first time:
 
-mpirun -np $nproc ./main.x $matsize $niter
+mpirun -np $nproc ./jacobi.x $matsize $niter
 
 echo "........................."
 echo "   DONE!"
