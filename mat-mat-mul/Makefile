@@ -12,8 +12,8 @@ INCLUDELIBS=-fopenmp
 
 ##  Standard compiler flags
 
-CFLAGS=-I$(INCLUDEDIR) -Wall -Wextra -march=native $(INCLUDELIBS) $(EXTRAFLAGS)
-OBJFLAGS=-I$(INCLUDEDIR) -Wall -Wextra -march=native $(INCLUDELIBS) $(EXTRAFLAGS)
+CFLAGS=-I$(INCLUDEDIR) -march=native $(INCLUDELIBS) $(EXTRAFLAGS)
+OBJFLAGS=-I$(INCLUDEDIR) -march=native $(INCLUDELIBS) $(EXTRAFLAGS)
 
 ##  Debug flags
 
