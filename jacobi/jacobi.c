@@ -166,6 +166,11 @@ int main(int argc, char* argv[])
   }
 
 
+  // debug, TODO: remove it
+
+    
+  save_gnuplot_parallel( matrix, dimension, local_size, rank, size );
+
   // start algorithm
 
   // t_start = seconds();

@@ -2,13 +2,13 @@
 #SBATCH --no-requeue
 #SBATCH --job-name="jacobi"
 #SBATCH --get-user-env
-#SBATCH --account ict24_dssc_gpu
+#SBATCH --account=ict24_dssc_gpu
 #SBATCH --partition=boost_usr_prod
 #SBATCH --nodes=2
 #SBATCH --ntasks=8
 #SBATCH --ntasks-per-node=4
 #SBATCH --cpus-per-task=8
-#SBATCH --gres=gpu:4
+#SBATCH --gres=gpu:1
 #SBATCH --mem=480G
 #SBATCH --time=00:15:00
 
@@ -20,7 +20,7 @@
 
 nproc=8      #number of MPI-processes
 matsize=8
-niter=10
+niter=1
 
 # Standard preamble
 echo "---------------------------------------------"
