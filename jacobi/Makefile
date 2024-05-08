@@ -8,7 +8,8 @@ c = 3
 CC=mpicc
 # enable the openACC compiler
 # CFLAGS=-O3 -fopenacc -lm
-CFLAGS=-O3 -acc -Minfo=all -DDEBUG_OPENACC
+# CFLAGS=-O3 -acc -Minfo=all -DDEBUG_OPENACC
+CFLAGS=-O3 -DDUMP -DSTOPWATCH# -acc -Minfo=all -DDEBUG_OPENACC -DFASTOUTPUT
 
 SRCS=$(wildcard *.c)
 EXE=$(SRCS:.c=.x)
