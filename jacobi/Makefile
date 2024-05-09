@@ -1,14 +1,16 @@
 CC=mpicc
-CFLAGS=-O3 -DSTOPWATCH -DFASTOUTPUT
+CFLAGS=-O3 -Wall -fopenmp -DSTOPWATCH
 
-# Decomment when you want to use openacc
+# De-comment when you want to use openacc
 CFLAGS += -acc -Minfo=acc
+
+# Comment when you want to plot the final result with gnuplot
+# -DFASTOUTPUT
 
 SRCS=$(wildcard *.c)
 EXE=$(SRCS:.c=.x)
 
 all: $(EXE)
-
 
 run: clean all
 	./$(EXE) $(dim) $(it) $(r) $(c)

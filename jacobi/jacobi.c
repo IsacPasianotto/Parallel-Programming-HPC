@@ -15,6 +15,7 @@
 #include <time.h>
 #include <sys/time.h>
 #include <mpi.h>
+#include <omp.h>
 
 #ifdef _OPENACC
 #include <accel.h>
@@ -113,6 +114,7 @@ int main(int argc, char* argv[])
   start_init = seconds();
 
   //fill initial values
+  #pragma omp parallel for collapse(2)
   for( i = 1; i <= local_size; ++i )
   {
     for (j = 1; j <= dimension; ++j)
@@ -177,7 +179,11 @@ int main(int argc, char* argv[])
 
       #pragma acc  data present(matrix[:(dimension+2)*(local_size+2)], matrix_new[:(dimension+2)*(local_size+2)])
       {
-        #pragma acc parallel loop collapse(2)
+        #ifdef _OPENACC
+          #pragma acc parallel loop collapse(2)
+        #else
+          #pragma omp parallel for collapse(2)
+        #endif
           for (int i = 1; i <= local_size; ++i)
           {
             for (int j = 1; j <= dimension; ++j)

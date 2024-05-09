@@ -4,23 +4,31 @@
 #SBATCH --get-user-env
 #SBATCH --account=ict24_dssc_gpu
 #SBATCH --partition=boost_usr_prod
-#SBATCH --nodes=2
-#SBATCH --ntasks=8
+#SBATCH --nodes=1                       # <--   Change there
+#SBATCH --ntasks=4                      # <--   Change there
 #SBATCH --ntasks-per-node=4
 #SBATCH --cpus-per-task=8
-#SBATCH --gres=gpu:1
+#SBATCH --gres=gpu:4
 #SBATCH --mem=480G
-#SBATCH --time=00:15:00
+#SBATCH --time=02:00:00
 
 
 # Personal remarsk:
 # -  on boos_usr_prod:
 #       1 socket --> 32 core, 1 socket per node
 #       4 GPUs per node
-
 nproc=8      #number of MPI-processes
-matsize=8
-niter=1
+
+# Requirements for the assignment
+#   - 0. iteration: 10
+#   - 1. matrix size: 1200 and 12000
+
+matsize=1200
+niter=10
+dirout="./plots"
+fileout="cpu-1200.csv"
+
+mkdir -p $dirout
 
 # Standard preamble
 echo "---------------------------------------------"
@@ -50,8 +58,10 @@ export OMP_PROC_BIND=close
 # if OMP_NUM_THREADS is not set, the number of threads is equal to the number of cores
 # export OMP_NUM_THREADS=56
 
-# Comment after first time:
 
+
+# Comment after first time:
+echo "time,rank,size,what" > $dirout/$fileout
 mpirun -np $nproc ./jacobi.x $matsize $niter
 
 echo "........................."
