@@ -286,13 +286,13 @@ int main(int argc, char* argv[])
 
 #ifdef STOPWATCH
   // time, rank, size, what
-    printf("%f,%d,%d,%s\n", end_init - start_init, rank, size, "matrix-initialization");
+    printf("%.10f,%d,%d,%s\n", end_init - start_init, rank, size, "matrix-initialization");
     #ifdef _OPENACC
-      printf("%f,%d,%d,%s\n", copyin_end - copyin_start, rank, size, "copy-matrix-cpu-to-gpu");
-      printf("%f,%d,%d,%s\n", copyout_end - copyout_start, rank, size, "copy-matrix-gpu-to-cpu");
+      printf("%.10f,%d,%d,%s\n", copyin_end - copyin_start, rank, size, "copy-matrix-cpu-to-gpu");
+      printf("%.10f,%d,%d,%s\n", copyout_end - copyout_start, rank, size, "copy-matrix-gpu-to-cpu");
     #endif
-    printf("%f,%d,%d,%s\n", communication_time, rank, size, "mpi-send-rec");
-    printf("%f,%d,%d,%s\n", compute_time, rank, size, "computation");
+    printf("%.10f,%d,%d,%s\n", communication_time, rank, size, "mpi-send-rec");
+    printf("%.10f,%d,%d,%s\n", compute_time, rank, size, "computation");
 #endif
   /**  End of printing time **/
 

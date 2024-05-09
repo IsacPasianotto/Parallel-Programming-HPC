@@ -2,10 +2,10 @@ CC=mpicc
 CFLAGS=-O3 -Wall -fopenmp -DSTOPWATCH
 
 # De-comment when you want to use openacc
-CFLAGS += -acc -Minfo=acc
+# CFLAGS += -acc -Minfo=acc
 
 # Comment when you want to plot the final result with gnuplot
-# -DFASTOUTPUT
+CFLAGS += -DFASTOUTPUT
 
 SRCS=$(wildcard *.c)
 EXE=$(SRCS:.c=.x)
@@ -23,5 +23,8 @@ clean:
 
 plot:
 	@gnuplot -p plot.plt
+
+plotbin:
+	@gnuplot -p plotbin.plt
 
 .PHONY: clean plot all
