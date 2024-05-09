@@ -66,14 +66,19 @@ int main(int argc, char* argv[])
   // -- declaration
   double increment;                            // timing variables
   double communication_time=0,compute_time=0;
-  double start_init, end_init, copyin_start, copyin_end, copyout_start, copyout_end;
+  double start_init, end_init;
+  #ifdef _OPENACC
+    double copyin_start, copyin_end, copyout_start, copyout_end;
+  #endif
   size_t i, j, it;                             // indexes for loops
   double *matrix, *matrix_new, *tmp_matrix;    // initialize matrix
   size_t dimension = 0, iterations = 0;
   size_t byte_dimension = 0;
-  int* recvcount=NULL;                         // MPI variables
-  int* displacement=NULL;
-  double* matrix_final=NULL;
+  #ifndef FASTOUTPUT
+    int* recvcount=NULL;                         // MPI variables
+    int* displacement=NULL;
+    double* matrix_final=NULL;
+  #endif
   if(argc != 3)
   {
     fprintf(stderr,"\nwrong number of arguments. Usage: ./a.out dim it\n");
