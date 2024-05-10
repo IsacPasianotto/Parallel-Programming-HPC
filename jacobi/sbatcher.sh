@@ -2,19 +2,19 @@
 #SBATCH --no-requeue
 #SBATCH --job-name="jacobi"
 #SBATCH --get-user-env
-#  #SBATCH --account=ict24_dssc_gpu
-#  #SBATCH --partition=boost_usr_prod
-#SBATCH --account=ict24_dssc_cpu
-#SBATCH --partition=dcgp_usr_prod
-#SBATCH --nodes=16                       # <--   Change there
-#SBATCH --ntasks=16                      # <--   Change there
-#SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=56
-#  #SBATCH --gres=gpu:4
+#SBATCH --account=ict24_dssc_gpu
+#SBATCH --partition=boost_usr_prod
+#     #SBATCH --account=ict24_dssc_cpu
+#     #SBATCH --partition=dcgp_usr_prod
+#SBATCH --nodes=32                       # <--   Change there
+#SBATCH --ntasks=128                      # <--   Change there
+#SBATCH --ntasks-per-node=4
+#SBATCH --cpus-per-task=8
+#SBATCH --gres=gpu:4
 #SBATCH --mem=480G
 #SBATCH --time=02:00:00
 
-nproc=16                                 # <--  Change there
+nproc=128                                 # <--  Change there
 
 # Personal remarsk:
 # -  on boos_usr_prod:
@@ -24,10 +24,10 @@ nproc=16                                 # <--  Change there
 #       2 socket
 #       56 core per socket 
 
-matsize=12000
+matsize=1200
 niter=10
 dirout="./plots"
-fileout="cpu-12000.csv"
+fileout="gpu-1200.csv"
 
 # Requirements for the assignment
 #   - 0. iteration: 10
