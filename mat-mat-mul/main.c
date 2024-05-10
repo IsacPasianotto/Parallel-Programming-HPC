@@ -173,7 +173,7 @@ int main(int argc, char* argv[])
     cublasHandle_t handle;
     cublasCreate(&handle);
     double alpha = 1.0;
-    double beta = 1.0;
+    double beta = 0.0;
     cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, all_sizes[iter], local_size, N, &alpha, device_B_buffer, all_sizes[iter], d_A, N, &beta, device_C_block, all_sizes[iter]);
     cublasDestroy(handle);
 
