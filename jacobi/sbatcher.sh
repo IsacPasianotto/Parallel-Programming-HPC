@@ -6,15 +6,15 @@
 #SBATCH --partition=boost_usr_prod
 #     #SBATCH --account=ict24_dssc_cpu
 #     #SBATCH --partition=dcgp_usr_prod
-#SBATCH --nodes=32                       # <--   Change there
-#SBATCH --ntasks=128                      # <--   Change there
+#SBATCH --nodes=2                       # <--   Change there
+#SBATCH --ntasks=8                      # <--   Change there
 #SBATCH --ntasks-per-node=4
 #SBATCH --cpus-per-task=8
 #SBATCH --gres=gpu:4
 #SBATCH --mem=480G
 #SBATCH --time=02:00:00
 
-nproc=128                                 # <--  Change there
+nproc=8                                 # <--  Change there
 
 # Personal remarsk:
 # -  on boos_usr_prod:
@@ -66,9 +66,15 @@ export OMP_PROC_BIND=close
 
 
 
-# Comment after first time:
+#                                     <-- commented at the end to generate the reference pictures
+# TODO: Comment after first time:
 # echo "time,rank,size,what" > $dirout/$fileout
-mpirun -np $nproc ./jacobi.x $matsize $niter >> $dirout/$fileout
+# mpirun -np $nproc ./jacobi.x $matsize $niter >> $dirout/$fileout
+
+mpirun -np $nproc ./jacobi.x 60 1 
+mv solution.dat solution_1_iter.dat
+mpirun -np $nproc ./jacobi.x 60 2000
+mv solution.dat solution_60_iter.dat
 
 echo "........................."
 echo "   DONE!"

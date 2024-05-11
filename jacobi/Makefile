@@ -3,6 +3,7 @@ CFLAGS=-O3 -Wall -fopenmp -DSTOPWATCH
 
 # De-comment when you want to use openacc
 # CFLAGS += -acc -Minfo=acc
+CFLAGS += -acc -Minfo=all
 
 # Comment when you want to plot the final result with gnuplot
 CFLAGS += -DFASTOUTPUT
