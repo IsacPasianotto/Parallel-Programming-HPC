@@ -133,7 +133,10 @@ main:
 
 Running the code with the same parameters as show in the [given reference image](https://github.com/Foundations-of-HPC/Advanced-High-Performance-Computing-2023/tree/main/GPU/Jacobi-project) (matrix size: 60, 2000 iteration) leads to the same results: 
 
-***TODO*** insierire plottini 
+
+<img src="./images/solution.png" style="width: 500px; margin-left: auto; margin-right: auto; display: block;">
+<figcaption>Figure 1: Plot generated with the edited version of the "plot.plt" file.</figcaption>
+
 
 ### 3.2 CPU performance
 

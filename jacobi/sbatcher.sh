@@ -71,10 +71,7 @@ export OMP_PROC_BIND=close
 # echo "time,rank,size,what" > $dirout/$fileout
 # mpirun -np $nproc ./jacobi.x $matsize $niter >> $dirout/$fileout
 
-mpirun -np $nproc ./jacobi.x 60 1 
-mv solution.dat solution_1_iter.dat
 mpirun -np $nproc ./jacobi.x 60 2000
-mv solution.dat solution_60_iter.dat
 
 echo "........................."
 echo "   DONE!"

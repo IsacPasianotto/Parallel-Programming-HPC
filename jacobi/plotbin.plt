@@ -5,4 +5,18 @@ set autoscale yfixmin
 set autoscale yfixmax
 set pm3d map
 set palette rgb 33,13,10
-splot "solution.dat" bin array=62x62 format="%lf" rotate=90deg with image
+
+# Set terminal to PNG
+set term png
+
+set title "60x60 matrix size, 2000 iterations"
+
+# Set output file
+set output "images/solution.png"
+
+# Plot and save
+splot "solution.dat" bin array=62x62 format="%lf" rotate=90deg with image notitle
+
+# Reset output
+set output
+
