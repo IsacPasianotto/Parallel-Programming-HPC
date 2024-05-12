@@ -66,12 +66,6 @@ $(OBJDIR)/main.o: $(mainfile)
 $(OBJDIR)/%.o: $(SRCDIR)/%.c
 	$(CC) $(CFLAGS) -c -o $@ $^
 
-
-
-
-# needed?
-.PHONY: clean
-
 clean:
 	rm -f $(OBJDIR)/*.o main.x
 

@@ -17,5 +17,10 @@ mat-mat-mul/other/*
 jacobi/other
 jacobi/other/*
 
+# LaTeX working dir
+/out
+/out/*
+
 # SLURM outs
 *.out
+
