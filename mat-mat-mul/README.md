@@ -20,7 +20,7 @@ All the matrices are distributed among the processing elements as represented in
 
 The main idea is performing a `for` loop cycle over the number of processing elements, and at each iteration, gathering a block of columns of the matrix $B$ in order to compute the local portion of the matrix $C$.
 
-<img src="./images/02.png" style="width: 650px; margin-left: auto; margin-right: auto; display: block;">
+<img src="./images/02.png" style="width: 750px; margin-left: auto; margin-right: auto; display: block;">
 <figcaption>Figure 2: Representation of the main loop of the algorithm. Since both the size of the matrix and the number of processing can be anything, the number of elements in each block that is gathered can be different.</figcaption>
 
 
@@ -68,7 +68,7 @@ The provided [`sbatcher.sh`](./sbatcher.sh) script can be used as example to wri
 
 - In the case of *naive* and *BLAS* implementation: 
   - 1 process per node
-  - asking as many cores as the number of GPUs in the node (they are going to be used to spread omp threads)
+  - asking as many cores as the number of CPUs in the node (they are going to be used to spread omp threads)
 - In case of *CUDA* implementation:
   - `<n_gpu_per_node>` processes per node
   - giving <total_core % n_gpu_per_node> cores to each process

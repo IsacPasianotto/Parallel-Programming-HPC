@@ -11,6 +11,7 @@
   - [3.1 Code correctness](#31-code-correctness)
   - [3.2 CPU performance](#32-cpu-performance)
   - [3.3 GPU performance](#33-gpu-performance)
+  - [3.4 Comparison](#34-comparison)
   
 
 ## 1. Description
@@ -31,12 +32,12 @@ The OpenMP directive influences the initialization of the matrix and the computa
 The matrix is divided in blocks, and each blocks is assigned to a process. If the division is not perfect the first processes will take care of the remaining rows.
 This is done for both the matrix that is storing the current values of the matrix and the matrix that is storing the values of the matrix for the following iteration (at the end of the iteration the two pointers are swapped).
 
-<img src="./images/00.png" style="width: 500px; margin-left: auto; margin-right: auto; display: block;">
+<img src="./images/00.png" style="width: 700px; margin-left: auto; margin-right: auto; display: block;">
 <figcaption>Figure 1: Division of the matrix among the processes. The matrix is divided in row-wise blocks. The firsts processes may have one more row than the others.</figcaption>
 
 To be more precise, in order to carry on computation, every process need to communicate with the others. Hence the `local_size` values of the previous figure is not the whole memory allocation each process need to have available. In fact each (with except of the first and the last) processes will store two additional more rows, one on the top and one at the bottom. 
 
-<img src="./images/01.png" style="width: 500px; margin-left: auto; margin-right: auto; display: block;">
+<img src="./images/01.png" style="width: 800px; margin-left: auto; margin-right: auto; display: block;">
 <figcaption>Figure 2: MPI-send and MPI-receive operations performed by each process before computing the values of the matrix for the following iteration. Each process will send the first row to the previous process and the last row to the next process. The only exception is the first process that will send only the last row and the last process that will send only the first row.</figcaption>
 
 When the computation is concluded we need to store the results somehow. I have implemented two different ways to do so:
@@ -140,8 +141,36 @@ Running the code with the same parameters as show in the [given reference image]
 
 ### 3.2 CPU performance
 
-***TODO*** inserire plottini
+The conducted scaling test shows how increasing the number of processes leads to benefits only if the matrix is big enough. 
+In fact for the $1,200\times 1,200$  the hovered which comes to the distributed setting is such that it obliterates the benefits of the parallelization.
+
+With the $12,000\times 12,000$ matrix (remember that multiply by a factor of 10 the size of the matrix means a factor fo 100 for the total number of elements),
+the communication is negligible (hence not the bottleneck) and the codes scales very well.
+
+<img src="./plots/plt00.png" style="width: 750px; margin-left: auto; margin-right: auto; display: block;"><br><br>
+
+<img src="./plots/plt01.png" style="width: 750px; margin-left: auto; margin-right: auto; display: block;"><br><br>
+
 
 ### 3.3 GPU performance
 
-***TODO*** inserire plottini
+Identically to the CPU performance, the GPU performance scales well only if the matrix is big enough.
+Also in this case in fact for the $1,200\times 1,2000$ matrix, most of the execution time is spent for the MPI communication; 
+in this case the situation is even worse than the CPU case, since the faster initialization and computation time makes the percentage of time spent for the communication even higher.
+
+<img src="./plots/plt02.png" style="width: 750px; margin-left: auto; margin-right: auto; display: block;"><br><br>
+
+Like in the previous case the $12,000\times 12,000$ matrix scales very well, but we can see that increasing the number of nodes 
+more than a certain threshold will end up in not to have any benefits. This is due to the fact that the communication time is not negligible anymore from
+a certain point on.
+
+<img src="./plots/plt03.png" style="width: 750px; margin-left: auto; margin-right: auto; display: block;"><br><br>
+
+### 3.4 Comparison
+
+As expected the GPU outperforms the CPU. The interesting result is that the difference starts to became negligible when increasing the number of nodes.
+I had not the ability to run the code on more than 16 nodes of the cluster I used, but probably from 32 or 64 nodes the difference will be negligible.
+
+<img src="./plots/plt05.png" style="width: 750px; margin-left: auto; margin-right: auto; display: block;"><br><br>
+
+<img src="./plots/plt06.png" style="width: 750px; margin-left: auto; margin-right: auto; display: block;"><br><br>
