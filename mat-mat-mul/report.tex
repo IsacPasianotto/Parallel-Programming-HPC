@@ -70,8 +70,9 @@
         \item In the naive implementation, almost the totality of the time spend is in the computation of the $C$ matrix.
             Matrix initialization and processes communication is completely negligible
         \item In the CUDA implementation, the major bottleneck, up to the tested 16 nodes, is the matrix initialization, but observing the
-            trend of the stack plot is reasonable to think that increasing the number of nodes the bottleneck will become performing the MPI-AllgatherV operation,
-            and moreover the time spent to compute the blocks of the result $C$  will become more and more relevant since it seems to not scale well with the number of nodes.
+            trend of the stack plot is reasonable to think that increasing the number of nodes the bottleneck will become performing the MPI-AllgatherV operation.
+            Furthermore, the time spent in the extraction of a block matrix from $B$ of elements such that they are contiguous seems to not scale well, this will
+            probably become a bottleneck increasing the number of nodes.
     \end{itemize}
 
     In the following pages are shown some of the most relevant plots obtained during the scaling tests.
