@@ -17,7 +17,7 @@ In this case you will need to manually compile and link in order to be able to r
 
 1. Download the source code:
     ```bash
-   git clone git clone https://github.com/open-mpi/hwloc.git
+   git clone https://github.com/open-mpi/hwloc.git
     ```
 2. Prepare a directory for the build:
     ```bash
