@@ -13,7 +13,7 @@ Moreover, the code tries to exploit the topology of the hardware in which is run
 
 The [`topology-explorer`](./topology-explorer.c) will allow you to explore the topology of the hardware in which you are running the code.
 It heavily relies on the [`openmpi-hwloc`](https://www.open-mpi.org/projects/hwloc/) library which may be installed on the used cluster. 
-In this case you will need to manually compile and link in order to be able to run the code. To do that: 
+In this case you will need to manually compile and link in order to be able to run the code. To do that:
 
 1. Download the source code:
     ```bash
@@ -41,6 +41,10 @@ In this case you will need to manually compile and link in order to be able to r
 To compile the code, you will need to manually link the `hwloc` library.
 Moreover, in order to let the code run properly, you will need to set the `LD_LIBRARY_PATH` environment variable to the path where the `hwloc` library is installed, as showed in the example [`sbatcher-topology.sh`](./sbatcher-topology.sh) script.
 
+>*Remark:* Depending on the system you are running the code, some function may not work properly.
+> I have assessed the correctness of the code on THIN and EPYC partition of the [Orfeo cluster](https://www.areasciencepark.it/piattaforme-tecnologiche/data-center-orfeo/). 
+> However, in the case of the DCGP partition of the Leonardo cluster, the function which retrieves in which socket the core is returns the -1 error value.
+
 ### 2.1 Results of the topology-explorer
 
 After running the code (the output is recorded in the file [`topology.log`](./topology.log)), I have obtained that nodes in the DCGP partition have the following topology:
@@ -51,6 +55,7 @@ After running the code (the output is recorded in the file [`topology.log`](./to
 - each cpu has 4 NUMA regions 
 - each NUMA region has 14 cores
 
+Note: All these conclusion are based on the reasonable hypothesis that the two sockets are identical. 
 
 ## 3. Modification to the original code
 
