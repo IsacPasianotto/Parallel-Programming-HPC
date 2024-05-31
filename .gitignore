@@ -24,3 +24,8 @@ jacobi/other/*
 # SLURM outs
 *.out
 
+
+jacobi-one-side/hwloc/
+jacobi-one-side/hwloc/*
+jacobi-one-side/hwloc-build/
+jacobi-one-side/hwloc-build/*
