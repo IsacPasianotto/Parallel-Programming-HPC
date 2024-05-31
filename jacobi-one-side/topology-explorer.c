@@ -12,7 +12,7 @@
 #include <mpi.h>
 #include <hwloc.h>
 
-void map_numa_cores(int rank, hwloc_topology_t topology, int num_nodes, int num_sockets)
+void map_numa_cores(int rank, hwloc_topology_t topology, int num_nodes)
 {
   int total_cores = 0;
   for (int i = 0; i < num_nodes; i++)
@@ -34,7 +34,7 @@ void map_numa_cores(int rank, hwloc_topology_t topology, int num_nodes, int num_
   }
 }
 
-void explore_topology(int rank, int num_sockets)
+void explore_topology(int rank)
 {
   hwloc_topology_t topology;
   // hwloc_obj_t obj;
@@ -51,7 +51,6 @@ void explore_topology(int rank, int num_sockets)
 
   // Get the number of sockets (packages)
   depth = hwloc_get_type_depth(topology, HWLOC_OBJ_PACKAGE);
-  printf("Rank %d: Number of sockets: %d\n", rank, num_sockets);
 
   // Get the total number of cores
   depth = hwloc_get_type_depth(topology, HWLOC_OBJ_CORE);
@@ -59,7 +58,7 @@ void explore_topology(int rank, int num_sockets)
   printf("Rank %d: Total number of cores: %d\n", rank, num_cores);
 
   // Explore the topology of NUMA nodes and cores
-  map_numa_cores(rank, topology, num_nodes, num_sockets);
+  map_numa_cores(rank, topology, num_nodes);
 
   // Destroy topology object
   hwloc_topology_destroy(topology);
@@ -72,8 +71,6 @@ int main(int argc, char** argv) {
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
   MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
 
-  // Simulate 1 process per node
-  int num_sockets = 2; // Example: Assuming 2 sockets per node
   MPI_Barrier(MPI_COMM_WORLD);
   // print in order of rank
   for (int i = 0; i < world_size; i++)
@@ -82,7 +79,7 @@ int main(int argc, char** argv) {
     {
       printf("\n\n============================================\n");
       printf("Rank %d: Exploring topology\n", world_rank);
-      explore_topology(world_rank, num_sockets);
+      explore_topology(world_rank);
     }
     MPI_Barrier(MPI_COMM_WORLD);
   }

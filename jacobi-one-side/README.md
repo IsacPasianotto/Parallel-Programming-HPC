@@ -41,7 +41,7 @@ In this case you will need to manually compile and link in order to be able to r
 To compile the code, you will need to manually link the `hwloc` library.
 Moreover, in order to let the code run properly, you will need to set the `LD_LIBRARY_PATH` environment variable to the path where the `hwloc` library is installed, as showed in the example [`sbatcher-topology.sh`](./sbatcher-topology.sh) script.
 
->*Remark:* Depending on the system you are running the code, some function may not work properly.
+>**Remark:** Depending on the system you are running the code, some function may not work properly.
 > I have assessed the correctness of the code on THIN and EPYC partition of the [Orfeo cluster](https://www.areasciencepark.it/piattaforme-tecnologiche/data-center-orfeo/). 
 > However, in the case of the DCGP partition of the Leonardo cluster, the function which retrieves in which socket the core is returns the -1 error value.
 
@@ -59,4 +59,7 @@ Note: All these conclusion are based on the reasonable hypothesis that the two s
 
 ## 3. Modification to the original code
 
-TBD...
+>**DISCLAIMER** This implementation is absolutely not optimized and it is not meant to be the most efficient way to solve the problem.
+> This must be considered as a theoretical speculation on how to use the `MPI` library with the `one-sided` communication paradigm and 
+> considering the topology of the hardware in which the code is running.
+
