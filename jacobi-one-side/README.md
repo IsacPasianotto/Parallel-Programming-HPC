@@ -28,7 +28,8 @@ In this case you will need to manually compile and link in order to be able to r
    ```bash
    export project_dir=$(pwd)
    cd hwloc
-   ./configure --prefix=$project_dir/hwloc-build
+   ./autogen.sh
+   ./configure --prefix=$project_dir/hwloc-build --disable-cairo
    ```
 4. Compile and install:
     ```bash
