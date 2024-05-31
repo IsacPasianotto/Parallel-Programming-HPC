@@ -41,6 +41,16 @@ In this case you will need to manually compile and link in order to be able to r
 To compile the code, you will need to manually link the `hwloc` library.
 Moreover, in order to let the code run properly, you will need to set the `LD_LIBRARY_PATH` environment variable to the path where the `hwloc` library is installed, as showed in the example [`sbatcher-topology.sh`](./sbatcher-topology.sh) script.
 
+### 2.1 Results of the topology-explorer
+
+After running the code (the output is recorded in the file [`topology.log`](./topology.log)), I have obtained that nodes in the DCGP partition have the following topology:
+
+- The total number of cores is 112
+- The node has 2 cpu sockets
+- each cpu has in total 56 cores
+- each cpu has 4 NUMA regions 
+- each NUMA region has 14 cores
+
 
 ## 3. Modification to the original code
 
