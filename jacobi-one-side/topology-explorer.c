@@ -37,7 +37,7 @@ void map_numa_cores(int rank, hwloc_topology_t topology, int num_nodes, int num_
 void explore_topology(int rank, int num_sockets)
 {
   hwloc_topology_t topology;
-  hwloc_obj_t obj;
+  // hwloc_obj_t obj;
   int depth;
 
   // Initialize hwloc topology

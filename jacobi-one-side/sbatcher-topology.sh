@@ -28,7 +28,7 @@ export workdir=$(pwd)
 export LD_LIBRARY_PATH=$workdir/hwloc-build/lib:$LD_LIBRARY_PATH
 
 mpicc topology-explorer.c -O3 -I$workdir/hwloc-build/include -L$workdir/hwloc-build/lib -lhwloc -o topology-explorer.x
-mpirun -np 2 ./topology-explorer.x
+mpirun -np 1 ./topology-explorer.x
 
 
 echo "........................."
