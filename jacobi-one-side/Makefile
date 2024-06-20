@@ -1,7 +1,5 @@
 CC=mpicc
-HWLOC_PATH=
-CFLAGS=-O3 -Wall -fopenmp -I$(HWLOC_PATH)/include -L$(HWLOC_PATH)/lib -lhwloc -lm
-
+CFLAGS=-O3 -Wall -fopenmp -lm -lhwloc
 # CFLAGS += ...
 
 # Comment when you want to plot the final result with gnuplot

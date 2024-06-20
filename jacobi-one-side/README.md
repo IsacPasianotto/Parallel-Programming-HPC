@@ -55,7 +55,8 @@ After running the code (the output is recorded in the file [`topology.log`](./to
 - each cpu has 4 NUMA regions 
 - each NUMA region has 14 cores
 
-Note: All these conclusion are based on the reasonable hypothesis that the two sockets are identical. 
+Note: All these conclusion are based on the taking the external information about the fact that the node has 2 cpu sockets [see here](https://wiki.u-gov.it/confluence/display/SCAIUS/UG3.2%3A+LEONARDO+UserGuide). 
+
 
 ## 3. Modification to the original code
 
