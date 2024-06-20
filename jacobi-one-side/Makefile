@@ -1,10 +1,12 @@
 CC=mpicc
 CFLAGS=-O3 -Wall -fopenmp -DSTOPWATCH
 # CFLAGS += ...
-CFLAGS += -DONESIDE -DPUT
+CFLAGS += -DONESIDE -DONEWIN # -DPUT
 
 # Comment when you want to plot the final result with gnuplot
 CFLAGS += -DFASTOUTPUT
+
+CFLAGS += -DMATRIX_SIZE=60 -DITERATIONS=2000
 
 SRCS=$(wildcard *.c)
 EXE=$(SRCS:.c=.x)
