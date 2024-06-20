@@ -56,6 +56,10 @@ int main(int argc, char *argv[])
   // send up, recv bottom
   int send_to;
   int recv_from;
+#ifdef ONESIDE
+  MPI_Win win;
+#endif
+
 
   if (argc != 3)
   {
@@ -65,13 +69,13 @@ int main(int argc, char *argv[])
   dimension = atoi(argv[1]);
   iterations = atoi(argv[2]);
 
-  #ifdef VERBOSE
-    if (rank == 0)
+#ifdef VERBOSE
+  if (rank == 0)
       {
           printf("matrix size = %zu\n", dimension);
           printf("number of iterations = %zu\n", iterations);
       }
-  #endif
+#endif
 
   size_t local_size = dimension / size;
   if (rank < (dimension % size))
@@ -91,7 +95,7 @@ int main(int argc, char *argv[])
   start_time = seconds();
 
   // fill initial values
-  #pragma omp parallel for collapse(2)
+#pragma omp parallel for collapse(2)
   for (i = 1; i <= local_size; ++i)
   {
     for (j = 1; j <= dimension; ++j)
@@ -137,47 +141,56 @@ int main(int argc, char *argv[])
     /*   communication of the borders   */
     double comm_time_start = seconds();
 
-    #ifndef ONESIDE
-      MPI_Sendrecv(matrix + (dimension + 2), dimension + 2, MPI_DOUBLE, send_to, 0,
-                   matrix + (dimension + 2) * (local_size + 1), dimension + 2, MPI_DOUBLE, recv_from, 0,
-                   MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-      MPI_Sendrecv(matrix + (dimension + 2) * local_size, dimension + 2, MPI_DOUBLE, recv_from, 0,
-                   matrix, dimension + 2, MPI_DOUBLE, send_to, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    #else
-      /*
-       * One sided communication: each process open a memory window to the other processes
+#ifndef ONESIDE
+    MPI_Sendrecv(matrix + (dimension + 2), dimension + 2, MPI_DOUBLE, send_to, 0,
+                 matrix + (dimension + 2) * (local_size + 1), dimension + 2, MPI_DOUBLE, recv_from, 0,
+                 MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    MPI_Sendrecv(matrix + (dimension + 2) * local_size, dimension + 2, MPI_DOUBLE, recv_from, 0,
+                 matrix, dimension + 2, MPI_DOUBLE, send_to, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+#else
+    /*
+       * One sided communication: each process opens a memory window to the other processes
        * Only to exercise the one-sided communication:
        *  - PUT the data in the window
        *  - GET the data from the window
        */
 
-      MPI_Win win_up, win_down;  // first and last rows
-      if (rank != size - 1)
-      {
-        MPI_Win_create(matrix + (dimension + 2) * (local_size), (dimension + 2) * sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win_down);
-      }
-      if (rank != 0)
-      {
-        MPI_Win_create(matrix + (dimension + 2), (dimension + 2) * sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win_up);
-      }
-      MPI_Barrier(MPI_COMM_WORLD);
-      if (rank != size - 1)
-      {
-        MPI_Win_fence(0, win_down);
-        MPI_Put(matrix + (dimension + 2) * local_size, dimension + 2, MPI_DOUBLE, recv_from, 0, dimension + 2, MPI_DOUBLE, win_down);
-        MPI_Win_fence(0, win_down);
-      }
-      if (rank != 0)
-      {
-        MPI_Win_fence(0, win_up);
-        MPI_Put(matrix + (dimension + 2), dimension + 2, MPI_DOUBLE, send_to, 0, dimension + 2, MPI_DOUBLE, win_up);
-        MPI_Win_fence(0, win_up);
-      }
-      free(win_up);
-      free(win_down);
-      MPI_Barrier(MPI_COMM_WORLD);
-    #endif
+      // Define a window for the matrix
+      MPI_Win_create(matrix, byte_dimension, sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win);
 
+      #ifdef PUT
+        // Put upper border to the previous process
+        MPI_Win_fence(0, win);
+        if (send_to != MPI_PROC_NULL) {
+          MPI_Put(matrix + (dimension + 2), dimension + 2, MPI_DOUBLE, send_to, (dimension + 2) * (local_size + 1), dimension + 2, MPI_DOUBLE, win);
+        }
+        MPI_Win_fence(0, win);
+
+        // Put lower border to the next process
+        MPI_Win_fence(0, win);
+        if (recv_from != MPI_PROC_NULL) {
+          MPI_Put(matrix + (dimension + 2) * local_size, dimension + 2, MPI_DOUBLE, recv_from, 0, dimension + 2, MPI_DOUBLE, win);
+        }
+        MPI_Win_fence(0, win);
+
+      #else // ifdef GET
+        // Get upper border from the previous process
+        MPI_Win_fence(0, win);
+        if (send_to != MPI_PROC_NULL) {
+          MPI_Get(matrix + (dimension + 2) * (local_size + 1), dimension + 2, MPI_DOUBLE, send_to, (dimension + 2) * (local_size + 1), dimension + 2, MPI_DOUBLE, win);
+        }
+        MPI_Win_fence(0, win);
+
+        // Get lower border from the next process
+        MPI_Win_fence(0, win);
+        if (recv_from != MPI_PROC_NULL) {
+          MPI_Get(matrix, dimension + 2, MPI_DOUBLE, recv_from, 0, dimension + 2, MPI_DOUBLE, win);
+        }
+        MPI_Win_fence(0, win);
+      #endif  // end of ifdef GET
+
+      MPI_Win_free(&win);
+#endif  // end of  ifdef ONESIDE
 
     communication_time += seconds() - comm_time_start;
     /*   end of communication of the borders   */
@@ -186,7 +199,7 @@ int main(int argc, char *argv[])
     double compute_time_start = seconds();
 
     /** evolve the matrix **/
-    #pragma omp parallel for collapse(2)
+#pragma omp parallel for collapse(2)
     for (i = 1; i <= local_size; ++i)
     {
       for (j = 1; j <= dimension; ++j)
@@ -226,8 +239,8 @@ int main(int argc, char *argv[])
   /** end of saving the results **/
 
   /** Print the times **/
-  #ifdef STOPWATCH
-    // time, rank, size, what
+#ifdef STOPWATCH
+  // time, rank, size, what
     printf("%.10f,%d,%d,%s\n", end_time - start_time, rank, size, "matrix-initialization");
     #ifdef _OPENACC
     printf("%.10f,%d,%d,%s\n", copyin_end - copyin_start, rank, size, "copy-matrix-cpu-to-gpu");
@@ -235,7 +248,7 @@ int main(int argc, char *argv[])
     #endif
     printf("%.10f,%d,%d,%s\n", communication_time, rank, size, "mpi-send-rec");
     printf("%.10f,%d,%d,%s\n", compute_time, rank, size, "computation");
-  #endif
+#endif
   /** End of printing time **/
 
   /** Finalize the program **/
@@ -298,3 +311,4 @@ void set_displacement(int *displacement, const int *recvcount, int size)
   }
 }
 /*** end of function definitions ***/
+
