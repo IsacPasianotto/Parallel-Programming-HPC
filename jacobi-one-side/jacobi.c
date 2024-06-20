@@ -134,15 +134,54 @@ int main(int argc, char *argv[])
   /** start the actual algorithm **/
   for (it = 0; it < iterations; ++it)
   {
+    /*   communication of the borders   */
     double comm_time_start = seconds();
 
-    MPI_Sendrecv(matrix + (dimension + 2), dimension + 2, MPI_DOUBLE, send_to, 0,
-                 matrix + (dimension + 2) * (local_size + 1), dimension + 2, MPI_DOUBLE, recv_from, 0,
-                 MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    MPI_Sendrecv(matrix + (dimension + 2) * local_size, dimension + 2, MPI_DOUBLE, recv_from, 0,
-                 matrix, dimension + 2, MPI_DOUBLE, send_to, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    #ifndef ONESIDE
+      MPI_Sendrecv(matrix + (dimension + 2), dimension + 2, MPI_DOUBLE, send_to, 0,
+                   matrix + (dimension + 2) * (local_size + 1), dimension + 2, MPI_DOUBLE, recv_from, 0,
+                   MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+      MPI_Sendrecv(matrix + (dimension + 2) * local_size, dimension + 2, MPI_DOUBLE, recv_from, 0,
+                   matrix, dimension + 2, MPI_DOUBLE, send_to, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    #else
+      /*
+       * One sided communication: each process open a memory window to the other processes
+       * Only to exercise the one-sided communication:
+       *  - PUT the data in the window
+       *  - GET the data from the window
+       */
+
+      MPI_Win win_up, win_down;  // first and last rows
+      if (rank != size - 1)
+      {
+        MPI_Win_create(matrix + (dimension + 2) * (local_size), (dimension + 2) * sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win_down);
+      }
+      if (rank != 0)
+      {
+        MPI_Win_create(matrix + (dimension + 2), (dimension + 2) * sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win_up);
+      }
+      MPI_Barrier(MPI_COMM_WORLD);
+      if (rank != size - 1)
+      {
+        MPI_Win_fence(0, win_down);
+        MPI_Put(matrix + (dimension + 2) * local_size, dimension + 2, MPI_DOUBLE, recv_from, 0, dimension + 2, MPI_DOUBLE, win_down);
+        MPI_Win_fence(0, win_down);
+      }
+      if (rank != 0)
+      {
+        MPI_Win_fence(0, win_up);
+        MPI_Put(matrix + (dimension + 2), dimension + 2, MPI_DOUBLE, send_to, 0, dimension + 2, MPI_DOUBLE, win_up);
+        MPI_Win_fence(0, win_up);
+      }
+      free(win_up);
+      free(win_down);
+      MPI_Barrier(MPI_COMM_WORLD);
+    #endif
+
 
     communication_time += seconds() - comm_time_start;
+    /*   end of communication of the borders   */
+
 
     double compute_time_start = seconds();
 

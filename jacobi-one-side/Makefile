@@ -1,6 +1,7 @@
 CC=mpicc
 CFLAGS=-O3 -Wall -fopenmp -lm -lhwloc
 # CFLAGS += ...
+FLAGS += -DONESIDE
 
 # Comment when you want to plot the final result with gnuplot
 CFLAGS += -DFASTOUTPUT
