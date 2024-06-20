@@ -133,53 +133,51 @@ int main(int argc, char* argv[])
   #ifndef ONESIDE
     MPI_Sendrecv(matrix + (dimension + 2), dimension + 2, MPI_DOUBLE, proc_above, 0, matrix + (dimension + 2) * (local_size + 1), dimension + 2, MPI_DOUBLE, proc_below, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     MPI_Sendrecv(matrix + (dimension + 2) * local_size, dimension + 2, MPI_DOUBLE, proc_below, 2, matrix, dimension + 2, MPI_DOUBLE, proc_above, 3, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-  #else
-    //-- Two-sided communication
-    #ifdef ONEWIN    // open one window (try to reduce overhead)
+  #else     //-- Two-sided communication
+    #ifdef ONEWIN     // open one window (try to reduce overhead)
       MPI_Win win;
       MPI_Win_create(matrix, byte_dimension, sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win);
+      MPI_Win_fence(0, win);
       #ifdef PUT
-        MPI_Win_fence(0, win);
-        if (proc_above != MPI_PROC_NULL)
-          MPI_Put(matrix + (dimension + 2), dimension + 2, MPI_DOUBLE, proc_above, (dimension + 2) * local_size, dimension + 2, MPI_DOUBLE, win);
-        if (proc_below != MPI_PROC_NULL)
-          MPI_Put(matrix + (dimension + 2) * local_size, dimension + 2, MPI_DOUBLE, proc_below, 0, dimension + 2, MPI_DOUBLE, win);
-        MPI_Win_fence(0, win);
-      #else // end of ifdef PUT --> if GET
-        MPI_Win_fence(0, win);
-        if (proc_above != MPI_PROC_NULL)
-          MPI_Get(matrix, dimension + 2, MPI_DOUBLE, proc_above, (dimension + 2) * local_size, dimension + 2, MPI_DOUBLE, win);
-        if (proc_below != MPI_PROC_NULL)
-          MPI_Get(matrix + (dimension + 2) * (local_size + 1), dimension + 2, MPI_DOUBLE, proc_below, 0, dimension + 2, MPI_DOUBLE, win);
-        MPI_Win_fence(0, win);
+        MPI_Put(matrix + (dimension + 2), dimension + 2, MPI_DOUBLE, proc_above, (dimension + 2) * (local_size + 1), dimension + 2, MPI_DOUBLE, win);
+        MPI_Put(matrix + (dimension + 2) * local_size, dimension + 2, MPI_DOUBLE, proc_below, 0, dimension + 2, MPI_DOUBLE, win);
+      #else //  ifdef GET
+        MPI_Get(matrix + (dimension + 2) * (local_size + 1), dimension + 2, MPI_DOUBLE, proc_below, dimension + 2, dimension + 2, MPI_DOUBLE, win);
+        MPI_Get(matrix, dimension + 2, MPI_DOUBLE, proc_above, (dimension + 2) * local_size, dimension + 2, MPI_DOUBLE, win);
       #endif  // end of ifdef GET
+      MPI_Win_fence(0, win);
       MPI_Win_free(&win);
-    #else   // end of one window condition
-      // open two windows
+    #else   // end of one window condition ;   -- Two windows
       double* ghost_up = matrix;
       double* ghost_down = matrix + (local_size + 1) * (dimension + 2);
-
       double* first_row_point = matrix + (dimension + 2);
       double* last_row_point = matrix + (dimension + 2) * local_size;
 
       MPI_Win ghost_up_win, ghost_down_win;
-      MPI_Win_create(ghost_up, (MPI_Aint)dimension * sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &ghost_up_win);
-      MPI_Win_create(ghost_down, (MPI_Aint)dimension * sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &ghost_down_win);
+      MPI_Win_create(ghost_up, dimension * sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &ghost_up_win);
+      MPI_Win_create(ghost_down, dimension * sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &ghost_down_win);
 
-      #ifdef PUT
       MPI_Win_fence(0, ghost_up_win);
       MPI_Win_fence(0, ghost_down_win);
-      if (proc_above != MPI_PROC_NULL)
+
+      #ifdef PUT
         MPI_Put(first_row_point, dimension, MPI_DOUBLE, proc_above, 0, dimension, MPI_DOUBLE, ghost_down_win);
-      if (proc_below != MPI_PROC_NULL)
         MPI_Put(last_row_point, dimension, MPI_DOUBLE, proc_below, 0, dimension, MPI_DOUBLE, ghost_up_win);
+      #else
+        if (it  == 0)
+        {
+          if (rank == 0)
+          {
+            printf("!!! WARNING !!!\n NOT COMPLETED YET\n\n");
+          }
+        }
+        MPI_Get(first_row_point, dimension, MPI_DOUBLE, proc_above, 0, dimension, MPI_DOUBLE, ghost_down_win);
+        MPI_Get(last_row_point, dimension, MPI_DOUBLE, proc_below, 0, dimension, MPI_DOUBLE, ghost_up_win);
+      #endif  // end of ifdef PUT
       MPI_Win_fence(0, ghost_down_win);
       MPI_Win_fence(0, ghost_up_win);
       MPI_Win_free(&ghost_up_win);
       MPI_Win_free(&ghost_down_win);
-      #else
-        printf("GET NOT IMPLEMENTED YET\n");
-      #endif  // end of ifdef PUT
     #endif  // end of two window condition
   #endif  // end of ONESIDE condition
 
