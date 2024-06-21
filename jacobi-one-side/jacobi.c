@@ -228,7 +228,7 @@ int main(int argc, char* argv[])
   #ifdef STOPWATCH
     // time, rank, size, what
     printf("%.10f,%d,%d,%s\n", end_init - start_init, rank, size, "matrix-initialization");
-    printf("%.10f,%d,%d,%s\n", communication_time, rank, size, "mpi-send-rec");
+    printf("%.10f,%d,%d,%s\n", communication_time, rank, size, "mpi-comm");
     printf("%.10f,%d,%d,%s\n", compute_time, rank, size, "computation");
   #endif
   /**  End of printing time **/
