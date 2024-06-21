@@ -6,8 +6,9 @@
  | context: exam of "Parallel programming for  |
  |      HPC". Msc Course in DSSC               |
  | description: Jacobi method for solving a    |
- |      Laplace equation, ported on GPU using  |
- |      openacc and distributed using MPI      |
+ |      Laplace equation, implementation of    |
+ |      the exercise using the RMA model of    |
+ |      MPI.                                   |
  *---------------------------------------------*/
 #include <string.h>
 #include <stdlib.h>
@@ -155,31 +156,31 @@ int main(int argc, char* argv[])
 
       MPI_Win ghost_up_win, ghost_down_win;
 
-
       #ifdef PUT
         MPI_Win_create(ghost_up, dimension * sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &ghost_up_win);
         MPI_Win_create(ghost_down, dimension * sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &ghost_down_win);
-        MPI_Win_fence(0, ghost_up_win);
-        MPI_Win_fence(0, ghost_down_win);
-
-        MPI_Put(first_row_point, dimension, MPI_DOUBLE, proc_above, 0, dimension, MPI_DOUBLE, ghost_down_win);
-        MPI_Put(last_row_point, dimension, MPI_DOUBLE, proc_below, 0, dimension, MPI_DOUBLE, ghost_up_win);
-
-        MPI_Win_fence(0, ghost_down_win);
-        MPI_Win_fence(0, ghost_up_win);
-      #else
+      #else //  ifdef GET
         MPI_Win_create(first_row_point, dimension * sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &ghost_up_win);
         MPI_Win_create(last_row_point, dimension * sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &ghost_down_win);
-        MPI_Win_fence(0, ghost_up_win);
-        MPI_Win_fence(0, ghost_down_win);
+      #endif
+
+      MPI_Win_fence(0, ghost_up_win);
+      MPI_Win_fence(0, ghost_down_win);
+
+      #ifdef PUT
+        MPI_Put(first_row_point, dimension, MPI_DOUBLE, proc_above, 0, dimension, MPI_DOUBLE, ghost_down_win);
+        MPI_Put(last_row_point, dimension, MPI_DOUBLE, proc_below, 0, dimension, MPI_DOUBLE, ghost_up_win);
+      #else
         MPI_Get(ghost_down, dimension, MPI_DOUBLE, proc_below, 0, dimension, MPI_DOUBLE, ghost_up_win);
         MPI_Get(ghost_up, dimension, MPI_DOUBLE, proc_above, 0, dimension, MPI_DOUBLE, ghost_down_win);
-        MPI_Win_fence(0, ghost_down_win);
-        MPI_Win_fence(0, ghost_up_win);
-      #endif  // end of ifdef PUT
+      #endif
+
+      MPI_Win_fence(0, ghost_down_win);
+      MPI_Win_fence(0, ghost_up_win);
 
       MPI_Win_free(&ghost_up_win);
       MPI_Win_free(&ghost_down_win);
+
     #endif  // end of two window condition
   #endif  // end of ONESIDE condition
 
