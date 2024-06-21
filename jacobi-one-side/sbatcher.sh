@@ -4,15 +4,15 @@
 #SBATCH --get-user-env
 #SBATCH --account=ict24_dssc_cpu
 #SBATCH --partition=dcgp_usr_prod
-#SBATCH --nodes=1                       # <--   Change there
-#SBATCH --ntasks=1                      # <--   Change there
+#SBATCH --nodes=16                       # <--   Change there
+#SBATCH --ntasks=16                      # <--   Change there
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=112
 #SBATCH --mem=480G
-#SBATCH --time=02:00:00
+#SBATCH --time=00:10:00
 
-nproc=1                                 # <--  Change there
-nnodes="1nodes"
+nproc=16                                 # <--  Change there
+nnodes="16nodes"                         # <--  Change there
 # Personal remarsk:
 # - on dcgp_usr_prot:
 #       2 socket
@@ -25,7 +25,6 @@ nnodes="1nodes"
 
 dirout="./plots"
 export niter=10
-
 mkdir -p $dirout
 
 # Standard preamble
@@ -41,6 +40,7 @@ module load openmpi/4.1.6--gcc--12.2.0
 
 export OMP_PLACES=cores
 export OMP_PROC_BIND=close
+export OMP_NUM_THREADS=112
 # if OMP_NUM_THREADS is not set, the number of threads is equal to the number of cores
 
 ############################
@@ -59,7 +59,9 @@ make clean
 mpicc jacobi.c -O3 -Wall -fopenmp -DSTOPWATCH -DONESIDE -DONEWIN -DPUT -o jacobi.x
 
 echo "time,rank,size,what" > $dirout/$fileout
-srun -N $nproc ./jacobi.x $matsize $niter >> $dirout/$fileout
+for i in {1..10};do
+    srun -N $nproc ./jacobi.x $matsize $niter >> $dirout/$fileout
+done
 
 nwin="1win"
 type="put"
@@ -67,9 +69,9 @@ matsize=12000
 fileout="$nnodes-$nwin-$type-$matsize.csv"
 
 echo "time,rank,size,what" > $dirout/$fileout
-srun -N $nproc ./jacobi.x $matsize $niter >> $dirout/$fileout
-
-
+for i in {1..10};do
+    srun -N $nproc ./jacobi.x $matsize $niter >> $dirout/$fileout
+done
 ############################
 ##  RMA:  One win - GET  ##
 ############################
@@ -82,7 +84,9 @@ matsize=1200
 fileout="$nnodes-$nwin-$type-$matsize.csv"
 
 echo "time,rank,size,what" > $dirout/$fileout
-srun -N $nproc ./jacobi.x $matsize $niter >> $dirout/$fileout
+for i in {1..10};do
+    srun -N $nproc ./jacobi.x $matsize $niter >> $dirout/$fileout
+done
 
 nwin="1win"
 type="get"
@@ -90,7 +94,9 @@ matsize=12000
 fileout="$nnodes-$nwin-$type-$matsize.csv"
 
 echo "time,rank,size,what" > $dirout/$fileout
-srun -N $nproc ./jacobi.x $matsize $niter >> $dirout/$fileout
+for i in {1..10};do
+    srun -N $nproc ./jacobi.x $matsize $niter >> $dirout/$fileout
+done
 
 ############################
 ##  RMA:  Two win - PUT  ##
@@ -104,7 +110,9 @@ matsize=1200
 fileout="$nnodes-$nwin-$type-$matsize.csv"
 
 echo "time,rank,size,what" > $dirout/$fileout
-srun -N $nproc ./jacobi.x $matsize $niter >> $dirout/$fileout
+for i in {1..10};do
+    srun -N $nproc ./jacobi.x $matsize $niter >> $dirout/$fileout
+done
 
 nwin="2win"
 type="put"
@@ -112,7 +120,9 @@ matsize=12000
 fileout="$nnodes-$nwin-$type-$matsize.csv"
 
 echo "time,rank,size,what" > $dirout/$fileout
-srun -N $nproc ./jacobi.x $matsize $niter >> $dirout/$fileout
+for i in {1..10};do
+    srun -N $nproc ./jacobi.x $matsize $niter >> $dirout/$fileout
+done
 
 ############################
 ##  RMA:  Two win - GET  ##
@@ -126,7 +136,9 @@ matsize=1200
 fileout="$nnodes-$nwin-$type-$matsize.csv"
 
 echo "time,rank,size,what" > $dirout/$fileout
-srun -N $nproc ./jacobi.x $matsize $niter >> $dirout/$fileout
+for i in {1..10};do
+    srun -N $nproc ./jacobi.x $matsize $niter >> $dirout/$fileout
+done
 
 nwin="2win"
 type="get"
@@ -134,7 +146,9 @@ matsize=12000
 fileout="$nnodes-$nwin-$type-$matsize.csv"
 
 echo "time,rank,size,what" > $dirout/$fileout
-srun -N $nproc ./jacobi.x $matsize $niter >> $dirout/$fileout
+for i in {1..10};do
+    srun -N $nproc ./jacobi.x $matsize $niter >> $dirout/$fileout
+done
 
 ###########################
 ##       No RMA          ##
@@ -148,7 +162,9 @@ matsize=1200
 fileout="$nnodes-$nwin-$type-$matsize.csv"
 
 echo "time,rank,size,what" > $dirout/$fileout
-srun -N $nproc ./jacobi.x $matsize $niter >> $dirout/$fileout
+for i in {1..10};do
+    srun -N $nproc ./jacobi.x $matsize $niter >> $dirout/$fileout
+done
 
 nwin="two-sided-comm"
 type="none"
@@ -156,7 +172,9 @@ matsize=12000
 fileout="$nnodes-$nwin-$type-$matsize.csv"
 
 echo "time,rank,size,what" > $dirout/$fileout
-srun -N $nproc ./jacobi.x $matsize $niter >> $dirout/$fileout
+for i in {1..10};do
+    srun -N $nproc ./jacobi.x $matsize $niter >> $dirout/$fileout
+done
 
 
 echo "........................."

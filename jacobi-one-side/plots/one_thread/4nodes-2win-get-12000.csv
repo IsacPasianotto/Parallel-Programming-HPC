@@ -1,0 +1,13 @@
+time,rank,size,what
+0.1025080681,0,4,matrix-initialization
+0.3990716934,0,4,mpi-comm
+0.6030111313,0,4,computation
+0.1033718586,2,4,matrix-initialization
+0.3854360580,2,4,mpi-comm
+0.6143410206,2,4,computation
+0.1029100418,1,4,matrix-initialization
+0.4035844803,1,4,mpi-comm
+0.6101825237,1,4,computation
+0.1039969921,3,4,matrix-initialization
+0.3761343956,3,4,mpi-comm
+0.6133415699,3,4,computation
