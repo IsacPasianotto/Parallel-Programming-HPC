@@ -132,8 +132,15 @@ int main(int argc, char* argv[])
     double time = seconds();
 
   #ifndef ONESIDE
-    MPI_Sendrecv(matrix + (dimension + 2), dimension + 2, MPI_DOUBLE, proc_above, 0, matrix + (dimension + 2) * (local_size + 1), dimension + 2, MPI_DOUBLE, proc_below, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    MPI_Sendrecv(matrix + (dimension + 2) * local_size, dimension + 2, MPI_DOUBLE, proc_below, 2, matrix, dimension + 2, MPI_DOUBLE, proc_above, 3, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    MPI_Request request[4];
+    MPI_Status status[4];
+    // send up, recv bottom
+    MPI_Isend(matrix + (dimension + 2), dimension + 2, MPI_DOUBLE, proc_above, 0, MPI_COMM_WORLD, &request[0]);
+    MPI_Irecv(matrix, dimension + 2, MPI_DOUBLE, proc_above, 0, MPI_COMM_WORLD, &request[1]);
+    // send bottom, recv up
+    MPI_Isend(matrix + (dimension + 2) * local_size, dimension + 2, MPI_DOUBLE, proc_below, 0, MPI_COMM_WORLD, &request[2]);
+    MPI_Irecv(matrix + (dimension + 2) * (local_size + 1), dimension + 2, MPI_DOUBLE, proc_below, 0, MPI_COMM_WORLD, &request[3]);
+    MPI_Waitall(4, request, status);
   #else     //-- Two-sided communication
     #ifdef ONEWIN     // open one window (try to reduce overhead)
       MPI_Win win;
