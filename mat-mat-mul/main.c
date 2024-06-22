@@ -198,15 +198,14 @@ int main(int argc, char* argv[])
     /*--------------------------------------------------*
     | 2.4. Clean up memory for the loop                |
     *--------------------------------------------------*/
+    free(sendcounts);
+    free(displs);
+    free(buffer);
 
 #ifdef CUDA
     cudaFree(device_C_block);
     cudaFree(device_B_buffer);
 #endif
-    free(sendcounts);
-    free(displs);
-    free(buffer);
-    free(local_block);
 
 #ifndef CUDA
     free(local_C_block);
