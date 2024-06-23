@@ -1,4 +1,4 @@
-## Standard preamble 
+## Standard preamble
 
 SHELL=/bin/bash
 CC=mpicc
@@ -10,12 +10,12 @@ SRCDIR=src
 INCLUDEDIR=include
 INCLUDELIBS=-fopenmp
 
-##  Standard compiler flags
+## Standard compiler flags
 
 CFLAGS=-I$(INCLUDEDIR) -march=native $(INCLUDELIBS) $(EXTRAFLAGS)
 OBJFLAGS=-I$(INCLUDEDIR) -march=native $(INCLUDELIBS) $(EXTRAFLAGS)
 
-##  Debug flags
+## Debug flags
 
 # Uncomment the following line to enable it
 # EXTRAFLAGS+=-DDEBUG
@@ -28,7 +28,6 @@ OBJFLAGS=-I$(INCLUDEDIR) -march=native $(INCLUDELIBS) $(EXTRAFLAGS)
 # EXTRAFLAGS+=-DNOSTOPWATCH
 
 EXTRAFLAGS+=-O3  # kept separate because causes issues with printing order in debug mode
-
 
 ## Implementation specific things
 
@@ -44,18 +43,16 @@ OBJS=$(OBJDIR)/main.o \
      $(OBJDIR)/product.o \
      $(OBJDIR)/stopwatch.o
 
-##  Compilation 
+## Compilation
+
+all: main.x
 
 blas: CFLAGS += $(BLASFLAGS)
 blas: $(OBJS)
-	$(CC) $(OBJFLAGS) -o main.x $^ $(BLASFLAGS)
+	$(CC) $(CFLAGS) -o main.x $^ $(BLASFLAGS)
 
-cuda: CC := $(NVCC)
-cuda: CFLAGS := $(CUDAFLAGS)
-cuda: OBJFLAGS := $(CUDAFLAGS)
 cuda: $(OBJS)
 	$(NVCC) $(CUDAFLAGS) -o main.x $^ $(CUDAFLAGS)
-
 
 main.x: $(OBJS)
 	$(CC) $(OBJFLAGS) -o $@ $^
@@ -69,3 +66,4 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.c
 clean:
 	rm -f $(OBJDIR)/*.o main.x
 
+.PHONY: all blas cuda clean

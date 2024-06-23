@@ -1,0 +1,11 @@
+time(s),rank-worker,number-of-nodes,algorithm,thing-measured
+36.501742,0,1,CPU-naive,init-A-B-C
+0.016431,0,1,CPU-naive,compute-col-block-B
+0.000094,0,1,CPU-naive,get-ready-allgatherv
+0.088304,0,1,CPU-naive,perform-allgatherv
+7.639606,0,1,CPU-naive,compute-block-C-result
+35.608547,0,1,CPU-OpenBLAS,init-A-B-C
+0.018515,0,1,CPU-OpenBLAS,compute-col-block-B
+0.000094,0,1,CPU-OpenBLAS,get-ready-allgatherv
+0.088332,0,1,CPU-OpenBLAS,perform-allgatherv
+3.712660,0,1,CPU-OpenBLAS,compute-block-C-result
