@@ -2,19 +2,19 @@
 #SBATCH --no-requeue
 #SBATCH --job-name="jacobi"
 #SBATCH --get-user-env
-#SBATCH --account=ict24_dssc_gpu
-#SBATCH --partition=boost_usr_prod
-#     #SBATCH --account=ict24_dssc_cpu
-#     #SBATCH --partition=dcgp_usr_prod
-#SBATCH --nodes=2                       # <--   Change there
-#SBATCH --ntasks=8                      # <--   Change there
-#SBATCH --ntasks-per-node=4
-#SBATCH --cpus-per-task=8
-#SBATCH --gres=gpu:4
+#   #SBATCH --account=ict24_dssc_gpu
+#  #SBATCH --partition=boost_usr_prod
+#SBATCH --account=ict24_dssc_cpu
+#SBATCH --partition=dcgp_usr_prod
+#SBATCH --nodes=1                       # <--   Change there
+#SBATCH --ntasks=1                      # <--   Change there
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=112
+# #SBATCH --gres=gpu:4
 #SBATCH --mem=480G
 #SBATCH --time=02:00:00
 
-nproc=8                                 # <--  Change there
+nproc=1                                 # <--  Change there
 
 # Personal remarsk:
 # -  on boos_usr_prod:
@@ -24,7 +24,7 @@ nproc=8                                 # <--  Change there
 #       2 socket
 #       56 core per socket 
 
-matsize=1200
+matsize=12000
 niter=10
 dirout="./plots"
 fileout="gpu-1200.csv"
@@ -60,6 +60,7 @@ make
 
 export OMP_PLACES=cores
 export OMP_PROC_BIND=close
+export OMP_NUM_THREADS=112
 
 # if OMP_NUM_THREADS is not set, the number of threads is equal to the number of cores
 # export OMP_NUM_THREADS=56
@@ -71,7 +72,8 @@ export OMP_PROC_BIND=close
 # echo "time,rank,size,what" > $dirout/$fileout
 # mpirun -np $nproc ./jacobi.x $matsize $niter >> $dirout/$fileout
 
-mpirun -np $nproc ./jacobi.x 60 2000
+echo "time,rank,size,what" > multithreads_12k.csv
+srun -N $nproc ./jacobi.x $matsize $niter >> multithreads_12k.csv
 
 echo "........................."
 echo "   DONE!"
