@@ -90,7 +90,7 @@ The result is the same as before, it's only partially mitigated (for smaller num
 We can look at it also in the log-log scale:
 
 <img src="./images/1winvs2win-12k_log.png" style="width: 500px; margin-left: auto; margin-right: auto; display: block;">
-<figcaption>Figure 1: 1 MPI_Win vs 2 MPI_Win comparison for a 12,000 x 12,000 grid in log-log scale.</figcaption>
+<figcaption>Figure 1: 1 MPI_Win vs 2 MPI_Win comparison for a 12,000 x 12,000 grid in log scale.</figcaption>
 
 Interesting enough, There is no a clear winner between the `1 MPI_Win` and `2 MPI_Win` cases.
 The variability of the results is very high, and enough to not allow to say which is the best.

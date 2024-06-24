@@ -15,8 +15,8 @@ For all the sections, the `README.md` file contains a detailed description of th
 
 ## Remark
 The results presented in the [`mat-mat-mul`](./mat-mat-mul) and [`jacobi`](./jacobi) sections are **biased**.\
-In fact, it turned out  that even explicitly setting the `OMP_NUM_THREADS` environment variable, running the code with `mpirun -np` leaded to a single thread execution.\
-Digging into the problem, It turned out that the same issue does not occur when running the code with `srun -N` command.\
+In fact, it turned out  that running the code with `mpirun -np` leaded to a single thread execution.\
+Digging into the problem, It turned out that the same issue does not occur when running the code with `srun -N` command.
 
 I figured out it in time to present the results of the `jacobi-one-side` executed in the proper way (I have also kept a first wrong execution in the results, to show the difference in [`one_thread`](./jacobi-one-side/plots/one_thread) folder). 
 I considered to re-measure the results of the other sections, but at the moment I am writing this (2024-06-24) the availability of the resources was almost zero and the deadline is too close.

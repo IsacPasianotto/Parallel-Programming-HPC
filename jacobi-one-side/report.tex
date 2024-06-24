@@ -1,0 +1,123 @@
+\documentclass{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{array}
+\usepackage{geometry}
+\usepackage{amsfonts}
+\usepackage{booktabs}
+\usepackage{multirow}
+
+\title{Parallel programming for HPC: exam project\\ Exercise 3: MPI one-sided communication for the Jacobi method}
+\author{\textbf{Student:} Isac Pasianotto}
+\date{2024-06}
+
+\setcounter{section}{-1} % Start section numbering from 0
+\renewcommand{\thesection}{\arabic{section}} % Adjust section numbering in the table of contents
+
+\begin{document}
+    \maketitle
+    %\tableofcontents
+
+    \section{Requirements}
+
+    The task this assignment aims  to solve is the parallelization of the Jacobi method using MPI one-sided communication.
+    The starting point is the already parallelized version of the Jacobi method using MPI point-to-point communication, which is the solution of the previous exercise.
+
+   \section{Implementation}
+
+    Since the focus of this exercise is the communication between processes, all the section of the code responsible for the GPU computation has been removed, and
+    the faster version of the output savin (MPI I/O) has been used.
+
+    The amount of data to be exchanged between processes is the same as in the previous exercise, but the communication is done using remote memory access (RMA) operations.
+
+    Since no specification was given about how precisely this communication should be performed, the following case has been implemented:
+
+    \begin{table}[h]
+        \centering
+        \begin{tabular}{@{}lcc@{}}
+                                              & \multicolumn{2}{c}{Operation used to retrieve Data} \\ \cmidrule(l){2-3}
+          \multirow{2}{*}{Number of windows}  & 1 Window - PUT            & 1 Window - GET            \\ \cmidrule(l){2-3}
+                                              & 2 Windows - PUT           & 2 Windows - PUT           \\
+        \end{tabular}
+        \caption{Different implementations of RMA}
+    \end{table}
+
+    With 1 window, I mean that the process will open a \texttt{MPI\_Win} object exposing to other processes the whole matrix, while with 2 windows, the process will open two \texttt{MPI\_Win} objects, one for the first row and one for the last row of the matrix.
+    The notation PUT and GET should be self-explanatory: the first one is used to write data to the remote process with \texttt{MPI\_Put}, while the second one is used to read data from the remote process with \texttt{MPI\_Get}.
+
+    \section{Results}
+
+    To keep consistency with the previous exercises, the code has been run for two different matrix sizes and a fixed number of iterations:
+
+    \begin{itemize}
+        \itemsep0em
+        \item \textit{Matrix size:} $1,200 \times 1,200$, \textit{Iterations:} $10$
+        \item \textit{Matrix size:} $12,000 \times 12,000$, \textit{Iterations:} $10$
+    \end{itemize}
+
+    The code was run on the \href{https://leonardo-supercomputer.cineca.eu/}{Leonardo} cluster on \href{https://wiki.u-gov.it/confluence/display/SCAIUS/UG3.2.2%3A+LEONARDO+DCGP+UserGuide}{DCGP} nodes, which are used for CPU computing, spawning one MPI process per node, and let OpenMP use all the available cores in the node.
+
+    The results are represented in the plots in the following pages, but can be summarized as follows:
+
+    \begin{itemize}
+        \itemsep0em
+        \item There is no clear winner between the \texttt{MPI\_Put} and \texttt{MPI\_Get} comparison.
+        \item In the same way, there is no clear winner between the 1 window and 2 windows comparison.
+        \item In all comparisons, the performance of the two assessed implementations is very similar, and the difference is most likely due to noise in the system.
+        \item The only clear difference is between all the RMA-based communication implementations and the "classic" MPI point-to-point communication, which is much faster in this specific problem.
+    \end{itemize}
+
+    \newpage
+
+    \subsection{\texttt{MPI\_Put} vs \texttt{MPI\_Get}}
+
+    \begin{figure}
+        \includegraphics[width=\textwidth]{./images/getvsput-1win-1200}
+        \caption{Matrix size: $1,200 \times 1,200$, 1 \texttt{MPI\_Win}. The \texttt{MPI\_Get} function seems to be slightly faster than the \texttt{MPI\_Put} one. Computation and initialization time are absolutely negligible.}
+        \label{fig:figure1}
+    \end{figure}
+
+    \begin{figure}
+        \includegraphics[width=\textwidth]{./images/getvsput-2win-1200}
+        \caption{Matrix size: $1,200 \times 1,200$, 2 \texttt{MPI\_Win}. The \texttt{MPI\_Put} function seems to be slightly faster than the \texttt{MPI\_Get} one. Computation and initialization time are absolutely negligible.}
+        \label{fig:figure2}
+    \end{figure}
+
+
+    \begin{figure}
+        \includegraphics[width=\textwidth]{./images/getvsput-1win-12k}
+        \caption{Matrix size: $12,000 \times 12,000$, 1 \texttt{MPI\_Win}. The \texttt{MPI\_Get} and \texttt{MPI\_Put} functions have similar performance. Computation and initialization become negligible only increasing the number of nodes.}
+        \label{fig:figure3}
+    \end{figure}
+
+    \begin{figure}
+        \includegraphics[width=\textwidth]{./images/getvsput-2win-12k}
+        \caption{Matrix size: $12,000 \times 12,000$, 2 \texttt{MPI\_Win}. The considerations are the same as in Figure \ref{fig:figure3}.}
+        \label{fig:figure4}
+    \end{figure}
+
+    \newpage
+    \subsection{1 window vs 2 windows}
+
+    For the following plots, the \texttt{MPI\_Put} function has been chosen as the communication method.
+
+    \noindent Moreover, to have a comparison with the previous exercise, the results of the MPI point-to-point communication have been included, using \texttt{MPI\_Isend} and \texttt{MPI\_Irecv} functions.
+
+
+    \begin{figure}
+        \includegraphics[width=\textwidth]{./images/1winvs2win-1200}
+        \caption{Matrix size: $1,200 \times 1,200$. The performance of the 1 window and 2 windows implementations is very similar. The MPI point-to-point communication is much faster. In any case the communication is clearly the bottleneck.}
+        \label{fig:figure5}
+    \end{figure}
+
+    \begin{figure}
+        \includegraphics[width=\textwidth]{./images/1winvs2win-12k}
+        \caption{Matrix size: $12,000 \times 12,000$. Even if the point-to-point communication is still faster, the 2 windows implementation seems to be slightly faster than the 1 window one The computation became negligible only increasing the number of nodes.}
+        \label{fig:figure6}
+    \end{figure}
+
+\end{document}
