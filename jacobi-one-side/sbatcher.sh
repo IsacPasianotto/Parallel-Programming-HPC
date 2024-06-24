@@ -13,11 +13,6 @@
 
 nproc=16                                 # <--  Change there
 nnodes="16nodes"                         # <--  Change there
-# Personal remarsk:
-# - on dcgp_usr_prot:
-#       2 socket
-#       56 core per socket
-
 
 # Requirements for the assignment
 #   - 0. iteration: 10
@@ -47,135 +42,22 @@ export OMP_NUM_THREADS=112
 ##  RMA:  One win - PUT  ##
 ############################
 make clean
-mpicc jacobi.c -O3 -Wall -fopenmp -DSTOPWATCH -DONESIDE -DONEWIN -DPUT -o jacobi.x
+make
 
 nwin="1win"
 type="put"
 matsize=1200
+
 fileout="$nnodes-$nwin-$type-$matsize.csv"
 
 
 make clean
-mpicc jacobi.c -O3 -Wall -fopenmp -DSTOPWATCH -DONESIDE -DONEWIN -DPUT -o jacobi.x
+make
 
 echo "time,rank,size,what" > $dirout/$fileout
 for i in {1..10};do
     srun -N $nproc ./jacobi.x $matsize $niter >> $dirout/$fileout
 done
-
-nwin="1win"
-type="put"
-matsize=12000
-fileout="$nnodes-$nwin-$type-$matsize.csv"
-
-echo "time,rank,size,what" > $dirout/$fileout
-for i in {1..10};do
-    srun -N $nproc ./jacobi.x $matsize $niter >> $dirout/$fileout
-done
-############################
-##  RMA:  One win - GET  ##
-############################
-make clean
-mpicc jacobi.c -O3 -Wall -fopenmp -DSTOPWATCH -DONESIDE -DONEWIN -o jacobi.x
-
-nwin="1win"
-type="get"
-matsize=1200
-fileout="$nnodes-$nwin-$type-$matsize.csv"
-
-echo "time,rank,size,what" > $dirout/$fileout
-for i in {1..10};do
-    srun -N $nproc ./jacobi.x $matsize $niter >> $dirout/$fileout
-done
-
-nwin="1win"
-type="get"
-matsize=12000
-fileout="$nnodes-$nwin-$type-$matsize.csv"
-
-echo "time,rank,size,what" > $dirout/$fileout
-for i in {1..10};do
-    srun -N $nproc ./jacobi.x $matsize $niter >> $dirout/$fileout
-done
-
-############################
-##  RMA:  Two win - PUT  ##
-############################
-make clean
-mpicc jacobi.c -O3 -Wall -fopenmp -DSTOPWATCH -DONESIDE -DPUT -o jacobi.x
-
-nwin="2win"
-type="put"
-matsize=1200
-fileout="$nnodes-$nwin-$type-$matsize.csv"
-
-echo "time,rank,size,what" > $dirout/$fileout
-for i in {1..10};do
-    srun -N $nproc ./jacobi.x $matsize $niter >> $dirout/$fileout
-done
-
-nwin="2win"
-type="put"
-matsize=12000
-fileout="$nnodes-$nwin-$type-$matsize.csv"
-
-echo "time,rank,size,what" > $dirout/$fileout
-for i in {1..10};do
-    srun -N $nproc ./jacobi.x $matsize $niter >> $dirout/$fileout
-done
-
-############################
-##  RMA:  Two win - GET  ##
-############################
-make clean
-mpicc jacobi.c -O3 -Wall -fopenmp -DSTOPWATCH -DONESIDE -o jacobi.x
-
-nwin="2win"
-type="get"
-matsize=1200
-fileout="$nnodes-$nwin-$type-$matsize.csv"
-
-echo "time,rank,size,what" > $dirout/$fileout
-for i in {1..10};do
-    srun -N $nproc ./jacobi.x $matsize $niter >> $dirout/$fileout
-done
-
-nwin="2win"
-type="get"
-matsize=12000
-fileout="$nnodes-$nwin-$type-$matsize.csv"
-
-echo "time,rank,size,what" > $dirout/$fileout
-for i in {1..10};do
-    srun -N $nproc ./jacobi.x $matsize $niter >> $dirout/$fileout
-done
-
-###########################
-##       No RMA          ##
-###########################
-make clean
-mpicc jacobi.c -O3 -Wall -fopenmp -DSTOPWATCH -o jacobi.x
-
-nwin="two-sided-comm"
-type="none"
-matsize=1200
-fileout="$nnodes-$nwin-$type-$matsize.csv"
-
-echo "time,rank,size,what" > $dirout/$fileout
-for i in {1..10};do
-    srun -N $nproc ./jacobi.x $matsize $niter >> $dirout/$fileout
-done
-
-nwin="two-sided-comm"
-type="none"
-matsize=12000
-fileout="$nnodes-$nwin-$type-$matsize.csv"
-
-echo "time,rank,size,what" > $dirout/$fileout
-for i in {1..10};do
-    srun -N $nproc ./jacobi.x $matsize $niter >> $dirout/$fileout
-done
-
 
 echo "........................."
 echo "   DONE!"

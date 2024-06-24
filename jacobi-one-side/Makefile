@@ -1,10 +1,15 @@
 CC=mpicc
 CFLAGS=-O3 -Wall -fopenmp -DSTOPWATCH
-# CFLAGS += ...
-CFLAGS += -DONESIDE -DONEWIN #  -DPUT
 
-# Comment when you want to plot the final result with gnuplot
-CFLAGS += -DFASTOUTPUT
+# Changing the CFLAGS variable to choose the desired version of the code.
+# Uncomment one of the following.
+# If none of them is uncommented, the default version is the MPI-Send/Recv version.
+
+# CFLAGS += -DONESIDE -DONEWIN -DPUT                            # 1 MPI window, retrieve data with MPI_Put
+# CFLAGS += -DONESIDE -DONEWIN                                  # 1 MPI window, retrieve data with MPI_Get
+# CFLAGS += -DONESIDE -DPUT                                     # 2 MPI windows, retrieve data with MPI_Put
+# CFLAGS += -DONESIDE                                           # 2 MPI windows, retrieve data with MPI_Get
+
 
 SRCS=$(wildcard *.c)
 EXE=$(SRCS:.c=.x)

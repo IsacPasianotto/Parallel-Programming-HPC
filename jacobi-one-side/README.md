@@ -1,66 +1,96 @@
-# Jacobi method for solving Laplace equation
+# Jacobi method for solving Laplace equation - RMA approach
 
 ## 0. Table of contents
 
+- [1. Description](#1-description)
+- [2. How to compile & run](#2-how-to-compile--run)
+- [3. Results](#3-results)  
+
+
 ## 1. Description
 
-This folder contains my solution for the given task: reimplementing the distributed version of the [jacobi exercixe](../jacobi) on cpu,
-but this time the `MPI` library must be used with the `one-sided` communication paradigm.
+This folder contains the implementation of the Jacobi method for solving the Laplace equation in a 2D grid. The implementation is based on the **remote memory access (RMA)** approach, using the MPI standard.\
+The presented code is the same presented in the folder [`jacobi`](../jacobi), but deprived of all the `openACC` directives which are not the focus of this work.
 
-Moreover, the code tries to exploit the topology of the hardware in which is running.
+**Requirements:** It was asked to implement the Jacobi method, but using `MPI` one-sided communication. By design this may be not the most efficient way to solve the problem,\
+it has to be considered as a theoretical exercise.
 
-## 2. Before running the jacobi code: topology
+**Implementation**: Depending on how the code is compiled, the behavior of the code can change a lot. In particular:
 
-The [`topology-explorer`](./topology-explorer.c) will allow you to explore the topology of the hardware in which you are running the code.
-It heavily relies on the [`openmpi-hwloc`](https://www.open-mpi.org/projects/hwloc/) library which may be installed on the used cluster. 
-In this case you will need to manually compile and link in order to be able to run the code. To do that:
+- A "standard" implementation with no RMA is provided. This differs from the one presented in the [previous exercise](../jacobi/jacobi.c) because the ` MPI_Sendrecv` functions were replaced by `MPI_Isend` and `MPI_Irecv` functions.
+- The required implementation using RMA. Since no specification was given, I thought that would be interesting to see how the code: 
+  - Using `1 MPI_Win` for the whole grid or `2 MPI_Win` (one for the upper row and one for the lower row).
+  - Using `MPI_Put` or `MPI_Accumulate` functions.\
+    
+Hence, all the 4 possible combinations are implemented.
 
-1. Download the source code:
-    ```bash
-   git clone https://github.com/open-mpi/hwloc.git
-    ```
-2. Prepare a directory for the build:
-    ```bash
-    mkdir -p hwloc-build
-   ```
+## 2. How to compile & run
 
-3. Configure the build:
-   ```bash
-   export project_dir=$(pwd)
-   cd hwloc
-   ./autogen.sh
-   ./configure --prefix=$project_dir/hwloc-build --disable-cairo
-   ```
-4. Compile and install:
-    ```bash
-    # Assuming you still be in the hwloc directory
-    make
-    make install 
-    ```
+The code can be compiled using the `make` command. Before to do that, you can edit the [`Makefile`](./Makefile) to choose the desired implementation (just uncomment the desired line).
 
-To compile the code, you will need to manually link the `hwloc` library.
-Moreover, in order to let the code run properly, you will need to set the `LD_LIBRARY_PATH` environment variable to the path where the `hwloc` library is installed, as showed in the example [`sbatcher-topology.sh`](./sbatcher-topology.sh) script.
+A example of file usable to run the code on the [DCGP Leonardo Partition](https://wiki.u-gov.it/confluence/display/SCAIUS/UG3.2.2%3A+LEONARDO+DCGP+UserGuide) is provided in the [`sbatcher.sh`](./sbatcher.sh) file.
+Before to run you will need to edit the file name of the results and the number of nodes and tasks.
 
->**Remark:** Depending on the system you are running the code, some function may not work properly.
-> I have assessed the correctness of the code on THIN and EPYC partition of the [Orfeo cluster](https://www.areasciencepark.it/piattaforme-tecnologiche/data-center-orfeo/). 
-> However, in the case of the DCGP partition of the Leonardo cluster, the function which retrieves in which socket the core is returns the -1 error value.
+The code is meant to run asking the resources manager one process per node, assigning all the available cores to the process, in order to maximize the performance parallelizing the code using `openMP` threads.
 
-### 2.1 Results of the topology-explorer
+## 3. Results
+>Remark: the result presented here are not affected by the bias described in the general [`README.md`](../README.md) file.
 
-After running the code (the output is recorded in the file [`topology.log`](./topology.log)), I have obtained that nodes in the DCGP partition have the following topology:
+All the following results are the average of 10 runs.
 
-- The total number of cores is 112
-- The node has 2 cpu sockets
-- each cpu has in total 56 cores
-- each cpu has 4 NUMA regions 
-- each NUMA region has 14 cores
+## 3.1. PUT vs GET 
 
-Note: All these conclusion are based on the taking the external information about the fact that the node has 2 cpu sockets [see here](https://wiki.u-gov.it/confluence/display/SCAIUS/UG3.2%3A+LEONARDO+UserGuide). 
+The first thing I wanted to test was if there is any significant difference between using `MPI_Put` or `MPI_Get` functions.\
+
+### 3.1.1  1,200 x 1,200 grid
+
+As expected in this case the computation and initialization time become absolutely negligible compared to the communication time.
+
+The most interesting thing is the fact that the there is no a clear winner between the two functions. The `MPI_Put` function is slightly faster than the `MPI_Get` function in the `1 MPI_Win` case, while the opposite is true in the `2 MPI_Win` case.
+
+<img src="./images/getvsput-1win-1200.png" style="width: 500px; margin-left: auto; margin-right: auto; display: block;">
+<figcaption>Figure 1: Get vs Put comparison for a 1,200 x 1,200 grid using 1 MPI_Win.</figcaption>
+
+<img src="./images/getvsput-2win-1200.png" style="width: 500px; margin-left: auto; margin-right: auto; display: block;">
+<figcaption>Figure 2: Get vs Put comparison for a 1,200 x 1,200 grid using 2 MPI_Win.</figcaption>
+
+### 3.1.1  12,000 x 12,000 grid
+
+The result seems to be inverted in this case. The `MPI_Get` function is slightly faster than the `MPI_Put` function in the `1 MPI_Win` case, while the opposite is true in the `2 MPI_Win` case.
+However, the difference is very small and probably the noise is bigger than the difference between the two functions, so it is not possible to say which is the best.
+
+<img src="./images/getvsput-1win-12k.png" style="width: 500px; margin-left: auto; margin-right: auto; display: block;">
+<figcaption>Figure 1: Get vs Put comparison for a 12,000 x 12,000 grid using 1 MPI_Win.</figcaption>
+
+<img src="./images/getvsput-2win-12k.png" style="width: 500px; margin-left: auto; margin-right: auto; display: block;">
+<figcaption>Figure 2: Get vs Put comparison for a 12,000 x 12,000 grid using 2 MPI_Win.</figcaption>
 
 
-## 3. Modification to the original code
+## 3.2. 1 MPI_Win vs 2 MPI_Win (Vs MPI_Send + MPI_Recv)
 
->**DISCLAIMER** This implementation is absolutely not optimized and it is not meant to be the most efficient way to solve the problem.
-> This must be considered as a theoretical speculation on how to use the `MPI` library with the `one-sided` communication paradigm and 
-> considering the topology of the hardware in which the code is running.
+Since there seems to be no clear winner between the `MPI_Put` and `MPI_Get` functions, I will consider only the `MPI_Put` function in the following comparison.
 
+The next interesting thing to test is if there is any difference between using `1 MPI_Win` for the whole grid or `2 MPI_Win` (one for the upper row and one for the lower row).
+To have a general idea of the performance, and to stress the fact that this is not the best way to solve the problem, I will compare the results with the one obtained using the `MPI_Send` and `MPI_Recv` functions.
+
+### 3.2.1  1,200 x 1,200 grid
+
+The most evident result is how, in this specific case, the RMA approach is significantly slower than the "standard" MPI communication pattern.\
+
+<img src="./images/1winvs2win-1200.png" style="width: 500px; margin-left: auto; margin-right: auto; display: block;">
+<figcaption>Figure 1: 1 MPI_Win vs 2 MPI_Win comparison for a 1,200 x 1,200 grid.</figcaption>
+
+### 3.2.1  12,000 x 12,000 grid
+
+The result is the same as before, it's only partially mitigated (for smaller number of nodes) by the fact that in this case the computation time is not negligible compared to the communication time.
+
+<img src="./images/1winvs2win-12k.png" style="width: 500px; margin-left: auto; margin-right: auto; display: block;">
+<figcaption>Figure 1: 1 MPI_Win vs 2 MPI_Win comparison for a 12,000 x 12,000 grid.</figcaption>
+
+We can look at it also in the log-log scale:
+
+<img src="./images/1winvs2win-12k_log.png" style="width: 500px; margin-left: auto; margin-right: auto; display: block;">
+<figcaption>Figure 1: 1 MPI_Win vs 2 MPI_Win comparison for a 12,000 x 12,000 grid in log-log scale.</figcaption>
+
+Interesting enough, There is no a clear winner between the `1 MPI_Win` and `2 MPI_Win` cases.
+The variability of the results is very high, and enough to not allow to say which is the best.
