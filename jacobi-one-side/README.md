@@ -40,13 +40,13 @@ All the following results are the average of 10 runs.
 
 ## 3.1. PUT vs GET 
 
-The first thing I wanted to test was if there is any significant difference between using `MPI_Put` or `MPI_Get` functions.\
+The first thing I wanted to test was if there is any significant difference between using `MPI_Put` or `MPI_Get` functions.
 
 ### 3.1.1  1,200 x 1,200 grid
 
-As expected in this case the computation and initialization time become absolutely negligible compared to the communication time.
+As expected in this case the computation and initialization time become absolutely negligible compared to the communication time, which represent almost the total of the execution time.
 
-The most interesting thing is the fact that the there is no a clear winner between the two functions. The `MPI_Put` function is slightly faster than the `MPI_Get` function in the `1 MPI_Win` case, while the opposite is true in the `2 MPI_Win` case.
+From the results obtained with this small matrices, `MPI_Get` function seems to be the best choice, since it is slightly faster than the `MPI_Put` function.
 
 <img src="./images/getvsput-1win-1200.png" style="width: 500px; margin-left: auto; margin-right: auto; display: block;">
 <figcaption>Figure 1: Get vs Put comparison for a 1,200 x 1,200 grid using 1 MPI_Win.</figcaption>
@@ -56,8 +56,7 @@ The most interesting thing is the fact that the there is no a clear winner betwe
 
 ### 3.1.1  12,000 x 12,000 grid
 
-The result seems to be inverted in this case. The `MPI_Get` function is slightly faster than the `MPI_Put` function in the `1 MPI_Win` case, while the opposite is true in the `2 MPI_Win` case.
-However, the difference is very small and probably the noise is bigger than the difference between the two functions, so it is not possible to say which is the best.
+The result seems to be confirmed only for small number of nodes. Scaling up the number of used nodes leads to results in which `MPI_Get` and `MPI_Put`  seems to be almost equivalent.
 
 <img src="./images/getvsput-1win-12k.png" style="width: 500px; margin-left: auto; margin-right: auto; display: block;">
 <figcaption>Figure 1: Get vs Put comparison for a 12,000 x 12,000 grid using 1 MPI_Win.</figcaption>
@@ -73,16 +72,18 @@ Since there seems to be no clear winner between the `MPI_Put` and `MPI_Get` func
 The next interesting thing to test is if there is any difference between using `1 MPI_Win` for the whole grid or `2 MPI_Win` (one for the upper row and one for the lower row).
 To have a general idea of the performance, and to stress the fact that this is not the best way to solve the problem, I will compare the results with the one obtained using the `MPI_Send` and `MPI_Recv` functions.
 
-### 3.2.1  1,200 x 1,200 grid
 
-The most evident result is how, in this specific case, the RMA approach is significantly slower than the "standard" MPI communication pattern.\
+The most evident result is how, in this specific case, the RMA approach is significantly slower than the "standard" MPI communication pattern.
+
+However is important to notice that the `RMA` approach it's slower only due to the initialization time, which is not negligible. Since the windows are initialize just one time before the main computation loop, 
+increasing the number of iteration (these benchmarks are done with just 100 iterations) could probably lead at some point to a better performance of the `RMA` approach.
+
+### 3.2.1  1,200 x 1,200 grid
 
 <img src="./images/1winvs2win-1200.png" style="width: 500px; margin-left: auto; margin-right: auto; display: block;">
 <figcaption>Figure 1: 1 MPI_Win vs 2 MPI_Win comparison for a 1,200 x 1,200 grid.</figcaption>
 
 ### 3.2.1  12,000 x 12,000 grid
-
-The result is the same as before, it's only partially mitigated (for smaller number of nodes) by the fact that in this case the computation time is not negligible compared to the communication time.
 
 <img src="./images/1winvs2win-12k.png" style="width: 500px; margin-left: auto; margin-right: auto; display: block;">
 <figcaption>Figure 1: 1 MPI_Win vs 2 MPI_Win comparison for a 12,000 x 12,000 grid.</figcaption>
