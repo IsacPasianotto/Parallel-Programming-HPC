@@ -126,6 +126,7 @@ int main(int argc, char* argv[])
 
   // Create the window
   #ifdef ONESIDE
+   double winstart = seconds();
     #ifdef ONEWIN
       MPI_Win win;
       MPI_Win_create(matrix, byte_dimension, sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win);
@@ -144,6 +145,7 @@ int main(int argc, char* argv[])
         MPI_Win_create(last_row_point, dimension * sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &ghost_down_win);
       #endif  // end of ifdef GET
     #endif // end of ONEWIN condition
+    double win_init_time = seconds() - winstart;
   #endif // end of ONESIDE condition
 
   /** start the actual algorithm  **/
@@ -242,6 +244,9 @@ int main(int argc, char* argv[])
     // time, rank, size, what
     printf("%.10f,%d,%d,%s\n", end_init - start_init, rank, size, "matrix-initialization");
     printf("%.10f,%d,%d,%s\n", communication_time, rank, size, "mpi-comm");
+    #ifdef ONESIDE
+      printf("%.10f,%d,%d,%s\n", win_init_time, rank, size, "win-creation");
+    #endif
     printf("%.10f,%d,%d,%s\n", compute_time, rank, size, "computation");
   #endif
   /**  End of printing time **/

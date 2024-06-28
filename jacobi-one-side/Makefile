@@ -5,7 +5,7 @@ CFLAGS=-O3 -Wall -fopenmp -DSTOPWATCH
 # Uncomment one of the following.
 # If none of them is uncommented, the default version is the MPI-Send/Recv version.
 
-# CFLAGS += -DONESIDE -DONEWIN -DPUT                            # 1 MPI window, retrieve data with MPI_Put
+CFLAGS += -DONESIDE -DONEWIN -DPUT                            # 1 MPI window, retrieve data with MPI_Put
 # CFLAGS += -DONESIDE -DONEWIN                                  # 1 MPI window, retrieve data with MPI_Ge
 # CFLAGS += -DONESIDE -DPUT                                     # 2 MPI windows, retrieve data with MPI_Put
 # CFLAGS += -DONESIDE                                           # 2 MPI windows, retrieve data with MPI_Get
