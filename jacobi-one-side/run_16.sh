@@ -53,8 +53,6 @@ matsize=1200
 fileout="$nnodes-$nwin-$type-$matsize.csv"
 
 
-make clean
-make
 
 echo "time,rank,size,what" > $dirout/$fileout
 for i in {1..10};do
@@ -86,9 +84,6 @@ matsize=1200
 fileout="$nnodes-$nwin-$type-$matsize.csv"
 
 
-make clean
-make
-
 echo "time,rank,size,what" > $dirout/$fileout
 for i in {1..10};do
     srun -N $nproc ./jacobi.x $matsize $niter >> $dirout/$fileout
@@ -110,7 +105,7 @@ done
 ##  RMA:  2 win - PUT  ##
 ############################
 make clean
-mpicc jacobi.c -O3 -Wall -fopenmp -DSTOPWATCH -DONESIDE -PUT -o jacobi.x
+mpicc jacobi.c -O3 -Wall -fopenmp -DSTOPWATCH -DONESIDE -DPUT -o jacobi.x
 
 
 nwin="2win"
@@ -119,9 +114,6 @@ matsize=1200
 
 fileout="$nnodes-$nwin-$type-$matsize.csv"
 
-
-make clean
-make
 
 echo "time,rank,size,what" > $dirout/$fileout
 for i in {1..10};do
@@ -152,9 +144,6 @@ matsize=1200
 
 fileout="$nnodes-$nwin-$type-$matsize.csv"
 
-
-make clean
-make
 
 echo "time,rank,size,what" > $dirout/$fileout
 for i in {1..10};do
