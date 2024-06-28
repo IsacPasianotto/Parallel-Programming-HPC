@@ -123,6 +123,29 @@ int main(int argc, char* argv[])
   #endif
   /** end of variable initialization **/
 
+
+  // Create the window
+  #ifdef ONESIDE
+    #ifdef ONEWIN
+      MPI_Win win;
+      MPI_Win_create(matrix, byte_dimension, sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win);
+    #else
+      MPI_Win ghost_up_win, ghost_down_win;
+      double* ghost_up = matrix;
+      double* ghost_down = matrix + (local_size + 1) * (dimension + 2);
+      double* first_row_point = matrix + (dimension + 2);
+      double* last_row_point = matrix + (dimension + 2) * local_size;
+
+      #ifdef PUT
+        MPI_Win_create(ghost_up, dimension * sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &ghost_up_win);
+        MPI_Win_create(ghost_down, dimension * sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &ghost_down_win);
+      #else //  ifdef GET
+        MPI_Win_create(first_row_point, dimension * sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &ghost_up_win);
+        MPI_Win_create(last_row_point, dimension * sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &ghost_down_win);
+      #endif  // end of ifdef GET
+    #endif // end of ONEWIN condition
+  #endif // end of ONESIDE condition
+
   /** start the actual algorithm  **/
   for (it = 0; it < iterations; ++it)
   {
@@ -143,9 +166,8 @@ int main(int argc, char* argv[])
     MPI_Waitall(4, request, status);
   #else     //-- Two-sided communication
     #ifdef ONEWIN     // open one window (try to reduce overhead)
-      MPI_Win win;
-      MPI_Win_create(matrix, byte_dimension, sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win);
       MPI_Win_fence(0, win);
+      //MPI_Win_lock(MPI_LOCK_SHARED, proc_above, 0, win);
       #ifdef PUT
         MPI_Put(matrix + (dimension + 2), dimension + 2, MPI_DOUBLE, proc_above, (dimension + 2) * (local_size + 1), dimension + 2, MPI_DOUBLE, win);
         MPI_Put(matrix + (dimension + 2) * local_size, dimension + 2, MPI_DOUBLE, proc_below, 0, dimension + 2, MPI_DOUBLE, win);
@@ -153,27 +175,14 @@ int main(int argc, char* argv[])
         MPI_Get(matrix + (dimension + 2) * (local_size + 1), dimension + 2, MPI_DOUBLE, proc_below, dimension + 2, dimension + 2, MPI_DOUBLE, win);
         MPI_Get(matrix, dimension + 2, MPI_DOUBLE, proc_above, (dimension + 2) * local_size, dimension + 2, MPI_DOUBLE, win);
       #endif  // end of ifdef GET
+      //MPI_Win_unlock(proc_above, win);
       MPI_Win_fence(0, win);
-      MPI_Win_free(&win);
     #else   // end of one window condition ;   -- Two windows
-      double* ghost_up = matrix;
-      double* ghost_down = matrix + (local_size + 1) * (dimension + 2);
-      double* first_row_point = matrix + (dimension + 2);
-      double* last_row_point = matrix + (dimension + 2) * local_size;
-
-      MPI_Win ghost_up_win, ghost_down_win;
-
-      #ifdef PUT
-        MPI_Win_create(ghost_up, dimension * sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &ghost_up_win);
-        MPI_Win_create(ghost_down, dimension * sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &ghost_down_win);
-      #else //  ifdef GET
-        MPI_Win_create(first_row_point, dimension * sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &ghost_up_win);
-        MPI_Win_create(last_row_point, dimension * sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &ghost_down_win);
-      #endif
 
       MPI_Win_fence(0, ghost_up_win);
       MPI_Win_fence(0, ghost_down_win);
-
+      //MPI_Win_lock(MPI_LOCK_EXCLUSIVE, proc_above, 0, ghost_up_win);
+      //MPI_Win_lock(MPI_LOCK_EXCLUSIVE, proc_below, 0, ghost_down_win);
       #ifdef PUT
         MPI_Put(first_row_point, dimension, MPI_DOUBLE, proc_above, 0, dimension, MPI_DOUBLE, ghost_down_win);
         MPI_Put(last_row_point, dimension, MPI_DOUBLE, proc_below, 0, dimension, MPI_DOUBLE, ghost_up_win);
@@ -181,13 +190,10 @@ int main(int argc, char* argv[])
         MPI_Get(ghost_down, dimension, MPI_DOUBLE, proc_below, 0, dimension, MPI_DOUBLE, ghost_up_win);
         MPI_Get(ghost_up, dimension, MPI_DOUBLE, proc_above, 0, dimension, MPI_DOUBLE, ghost_down_win);
       #endif
-
+      //MPI_Win_unlock(proc_above, ghost_up_win);
+      //MPI_Win_unlock(proc_below, ghost_down_win);
       MPI_Win_fence(0, ghost_down_win);
       MPI_Win_fence(0, ghost_up_win);
-
-      MPI_Win_free(&ghost_up_win);
-      MPI_Win_free(&ghost_down_win);
-
     #endif  // end of two window condition
   #endif  // end of ONESIDE condition
 
@@ -215,7 +221,7 @@ int main(int argc, char* argv[])
     matrix = matrix_new;
     matrix_new = tmp_matrix;
   } /* end of loop over iteration iterations */
-  MPI_Barrier(MPI_COMM_WORLD);
+
   /**   end of the matrix evolution   **/
 
   /**   Save the results   **/
@@ -242,6 +248,15 @@ int main(int argc, char* argv[])
 
   /**   Finalize the program   **/
 
+  #ifdef ONESIDE
+    #ifdef ONEWIN
+        MPI_Win_free(&win);
+    #else
+        MPI_Win_free(&ghost_up_win);
+        MPI_Win_free(&ghost_down_win);
+    #endif
+  #endif
+  MPI_Barrier(MPI_COMM_WORLD);
   free( matrix );
   free( matrix_new );
 
