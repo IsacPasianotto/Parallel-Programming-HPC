@@ -29,3 +29,16 @@ jacobi-one-side/hwloc/
 jacobi-one-side/hwloc/*
 jacobi-one-side/hwloc-build/
 jacobi-one-side/hwloc-build/*
+
+# LaTeX
+presentation.aux
+presentation.log
+presentation.nav
+presentation.out
+presentation.toc 
+presentation.snm
+
+
+# other
+ignore/
+ignore/*
