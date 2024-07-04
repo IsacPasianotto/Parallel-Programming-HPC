@@ -2,13 +2,14 @@
  | file: jacobi.c                              |
  | author: Ivan Girotto  (Prof. of the course) |
  | edited by: Isac Pasianotto                  |
- | date: 2024-04                               |
+ | date: 2024-04/5                             |
  | context: exam of "Parallel programming for  |
  |      HPC". Msc Course in DSSC               |
  | description: Jacobi method for solving a    |
  |      Laplace equation, ported on GPU using  |
  |      openacc and distributed using MPI      |
  *---------------------------------------------*/
+
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -21,7 +22,9 @@
 #include <accel.h>
 #endif
 
-/*** function declarations ***/
+/*---------------------------------------------*
+ | 0. Function Declarations                    |
+ *---------------------------------------------*/
 
 // save matrix to  .dat file in order to render with gnuplot
 void save_gnuplot( double *M, size_t dim );
@@ -32,23 +35,26 @@ int calculate_local_size(int tot_col,int size,int rank);
 void set_recvcout(int* recvcount, int size,int N);
 void set_displacement(int* displacement,const int* recvcount,int size);
 
-/*** end function declaration ***/
-
-/***    main     ***/
+/*---------------------------------------------*
+ | 0-bis. Main                                 |
+ *---------------------------------------------*/
 
 int main(int argc, char* argv[])
 {
 
-  /**   MPI initialization   **/
+  /*---------------------------------------------*
+   | 1. Initialization                           |
+   *---------------------------------------------*/
+
+  /*--  MPI initialization  --*/
   int provided;
   MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
   int rank, size;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  /**   end MPI initialization   **/
 
-  /**   OpenACC initialization   **/
+  /*--  OpenACC initialization  --*/
   #ifdef _OPENACC
     // Assign a GPU to each MPI-process
     const int num_devices = acc_get_num_devices(acc_device_nvidia);
@@ -60,11 +66,12 @@ int main(int argc, char* argv[])
     #endif// OpenACC call
   #endif
 
-  /**   end OpenACC initialization   **/
 
-  /**   Variables initialization   **/
+  /*---------------------------------------------*
+   | 2. Variable declaration                     |
+   *---------------------------------------------*/
 
-  // -- declaration
+  /*-- Program logic variables  --*/
   double increment;                            // timing variables
   double communication_time=0,compute_time=0;
   double start_init, end_init;
@@ -80,6 +87,8 @@ int main(int argc, char* argv[])
     int* displacement=NULL;
     double* matrix_final=NULL;
   #endif
+
+  // -- Check the number of arguments
   if(argc != 3)
   {
     fprintf(stderr,"\nwrong number of arguments. Usage: ./a.out dim it\n");
@@ -102,7 +111,10 @@ int main(int argc, char* argv[])
     local_size++;
   }
 
-  // -- allocation
+  /*---------------------------------------------*
+  | 2. Grid Initialization                       |
+  *---------------------------------------------*/
+
   byte_dimension = sizeof(double) * ( local_size + 2 ) * ( dimension + 2 );
   matrix = ( double* )malloc( byte_dimension );
   matrix_new = ( double* )malloc( byte_dimension );
@@ -147,9 +159,15 @@ int main(int argc, char* argv[])
     }
   }
   end_init = seconds();
-  /** end of variable initialization **/
 
-  /** start the actual algorithm  **/
+  /*---------------------------------------------*
+   | 3. Jacobi method main loop                  |
+   *---------------------------------------------*/
+
+  //send up,recv bottom
+  int send_to = (rank - 1) >= 0 ? rank - 1 : MPI_PROC_NULL;
+  int recv_from = (rank + 1) < size ? rank + 1 : MPI_PROC_NULL;
+
 
   #ifdef _OPENACC
     copyin_start = seconds();
@@ -161,11 +179,9 @@ int main(int argc, char* argv[])
     #endif
     for (it = 0; it < iterations; ++it)
     {
-      //send up,recv bottom
-      int send_to = (rank - 1) >= 0 ? rank - 1 : MPI_PROC_NULL;
-      int recv_from = (rank + 1) < size ? rank + 1 : MPI_PROC_NULL;
-      double time = seconds();
+      /*----------- 3.1 Communication -----------*/
 
+      double time = seconds();
       #pragma acc host_data use_device(matrix)
       {
         MPI_Sendrecv(matrix + (dimension + 2), dimension + 2, MPI_DOUBLE, send_to, 0, matrix + (dimension+2) * (local_size + 1), dimension+2, MPI_DOUBLE, recv_from, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
@@ -175,7 +191,7 @@ int main(int argc, char* argv[])
 
       time = seconds();
 
-      /** evolve the matrix **/
+      /*----------- 3.2 Matrix evolution -----------*/
 
       #pragma acc  data present(matrix[:(dimension+2)*(local_size+2)], matrix_new[:(dimension+2)*(local_size+2)])
       {
@@ -199,6 +215,8 @@ int main(int argc, char* argv[])
       }
       compute_time += seconds() - time;
 
+      /*----------- 3.3 Swap the pointers -----------*/
+
       #ifdef _OPENACC
         //swap the pointers on the device
         #pragma acc serial present(matrix[:(dimension+2)*(local_size+2)],matrix_new[:(dimension+2)*(local_size+2)])
@@ -216,9 +234,9 @@ int main(int argc, char* argv[])
     } /* end of loop over iteration iterations */
   } /* end of acc data region */
 
-  /**   end of the matrix evolution   **/
-
-  /**   Save the results   **/
+  /*---------------------------------------------*
+   | 4. Save the results                         |
+   *---------------------------------------------*/
 
   //Back to the host
   #ifdef _OPENACC
@@ -280,11 +298,13 @@ int main(int argc, char* argv[])
     }
   #endif  // enf if not FASTOUTPUT
 
-  /** end of saving the results **/
+  /*---------------------------------------------*
+   | 5. Finalization                             |
+   *---------------------------------------------*/
 
   /**  Print the times  **/
 
-#ifdef STOPWATCH
+  #ifdef STOPWATCH
   // time, rank, size, what
     printf("%.10f,%d,%d,%s\n", end_init - start_init, rank, size, "matrix-initialization");
     #ifdef _OPENACC
@@ -293,8 +313,7 @@ int main(int argc, char* argv[])
     #endif
     printf("%.10f,%d,%d,%s\n", communication_time, rank, size, "mpi-send-rec");
     printf("%.10f,%d,%d,%s\n", compute_time, rank, size, "computation");
-#endif
-  /**  End of printing time **/
+  #endif
 
   /**   Finalize the program   **/
 
@@ -303,11 +322,13 @@ int main(int argc, char* argv[])
 
   MPI_Finalize();
   return 0;
-}
+} // end of main
 
-/***  end of main ***/
 
-/*** function definitions ***/
+/*---------------------------------------------*
+ |    Function Definitions                     |
+ *---------------------------------------------*/
+
 void save_gnuplot( double *M, size_t dimension)
 {
   size_t i , j;
@@ -356,5 +377,3 @@ void set_displacement(int* displacement,const int* recvcount,int size)    //calc
     displacement[p] = displacement[p - 1] + recvcount[p - 1];
   }
 }
-
-/***  end of function declaration   ***/
