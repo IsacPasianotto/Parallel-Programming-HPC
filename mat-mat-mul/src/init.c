@@ -31,3 +31,20 @@ void init_local_matrix (double* M, long int n_elements)
     }
   }
 }
+
+void init_local_matrix_thread_safe(double* M, long int n_elements)
+{
+  #pragma omp parallel
+  {
+    unsigned int seed = omp_get_thread_num();
+    #pragma omp for
+    for (long int i = 0; i < n_elements; i++)
+    {
+      M[i] = (double) rand_r(&seed)/1000000;
+      if (rand_r(&seed) % 2 == 0)
+      {
+        M[i] *= -1;
+      }
+    }
+  }
+}
